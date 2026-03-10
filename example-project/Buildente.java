@@ -24,8 +24,8 @@ public class Buildente implements BuildScript {
         // 1. Declare a compilable Java program.
         //    Path is relative to this file's directory (buildente-app/).
         Executable exe = b.addExecutable(
-            "dev.haruki7049.buildente.example.Hello",
-            "examples/Hello.java"
+            "com.example.Hello",
+            "src/Hello.java"
         );
 
         // 2. Declare a run step that executes the compiled program.

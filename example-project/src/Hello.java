@@ -1,4 +1,4 @@
-package dev.haruki7049.buildente.example;
+package com.example;
 
 /**
  * A minimal example program compiled and run by Buildente.
