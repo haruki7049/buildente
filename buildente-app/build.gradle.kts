@@ -16,11 +16,7 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit test framework.
-    testImplementation(libs.junit)
-
-    // This dependency is used by the application.
-    implementation(libs.guava)
+    implementation(project(":buildente-lib"))
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
