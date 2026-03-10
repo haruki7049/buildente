@@ -13,7 +13,7 @@ import java.io.File;
 public class Executable extends Step {
 
     /** Directory where all compiled class files are placed. */
-    public static final String OUTPUT_DIR = "build/classes";
+    public static final String OUTPUT_DIR = "build/classes/java";
 
     /**
      * The original logical name of this executable (e.g. {@code "HelloWorld"}).
