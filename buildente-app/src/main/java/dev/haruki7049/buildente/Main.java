@@ -48,7 +48,7 @@ public class Main {
         // 1. Declare a compilable Java program
         Executable exe = b.addExecutable(
             "dev.haruki7049.buildente.example.Hello",
-            "buildente-app/examples/Hello.java"
+            "examples/Hello.java"
         );
 
         // 2. Declare a step to run the compiled program
