@@ -1,7 +1,13 @@
 package dev.haruki7049.buildente;
 
+import picocli.CommandLine;
+
+/** Main class which includes a entry point. */
 public class Main {
-    public static void main(String[] args) {
-        System.out.println("Hello world!!");
-    }
+
+  /** A main function. */
+  public static void main(String[] args) {
+    CommandLine cli = new CommandLine(new Cli());
+    System.exit(cli.execute(args));
+  }
 }
