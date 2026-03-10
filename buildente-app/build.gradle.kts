@@ -8,6 +8,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
+    alias(libs.plugins.shadow)
 }
 
 repositories {
@@ -17,6 +18,7 @@ repositories {
 
 dependencies {
     implementation(project(":buildente-lib"))
+    implementation(libs.picocli)
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

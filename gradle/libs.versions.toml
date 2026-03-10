@@ -2,9 +2,13 @@
 # https://docs.gradle.org/current/userguide/version_catalogs.html#sec::toml-dependencies-format
 
 [versions]
-guava = "33.4.6-jre"
-junit = "4.13.2"
+shadow = "9.3.2"
+picocli = "4.7.7"
+picocli_codegen = "4.7.7"
 
 [libraries]
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
-junit = { module = "junit:junit", version.ref = "junit" }
+picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
+picocli_codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli.codegen" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
