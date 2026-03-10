@@ -12,3 +12,4 @@ plugins {
 
 rootProject.name = "buildente"
 include("buildente-app")
+include("buildente-lib")
