@@ -38,7 +38,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "dev.haruki7049.buildente"
             artifactId = "buildente-lib"
-            version = "0.0.0"
+            version = System.getenv("BUILDENTE_VERSION") ?: "main-local"
 
             from(components["java"])
 
