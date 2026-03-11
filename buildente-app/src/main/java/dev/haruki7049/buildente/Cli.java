@@ -1,6 +1,7 @@
 package dev.haruki7049.buildente;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +13,7 @@ import picocli.CommandLine;
 public class Cli implements Callable<Integer> {
 
   @CommandLine.Unmatched
-  List<String> args;
+  List<String> args = new ArrayList<>();
 
   @Override
   public Integer call() throws Exception {
