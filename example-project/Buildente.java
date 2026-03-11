@@ -35,7 +35,7 @@ public class Buildente implements BuildScript {
 
     // 2. Declare an executable backed by the module.
     //    Mirrors b.addExecutable(.{ .name = "...", .root_module = mod }) in Zig.
-    Executable exe = b.addExecutable("com.example.Hello", mod);
+    Executable exe = b.addExecutable("com.example.Main", mod);
 
     // 3. Declare a run step that executes the compiled program.
     //    RunStep automatically depends on exe, so compilation always happens first.
