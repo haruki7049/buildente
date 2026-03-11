@@ -220,10 +220,21 @@ public final class ScriptRunner {
   /** Thrown when any phase of the script lifecycle (locate / compile / load) fails. */
   public static final class BuildScriptException extends RuntimeException {
 
+    /**
+     * Constructs a new exception with the specified detail message.
+     *
+     * @param message the detail message
+     */
     public BuildScriptException(String message) {
       super(message);
     }
 
+    /**
+     * Constructs a new exception with the specified detail message and cause.
+     *
+     * @param message the detail message
+     * @param cause the underlying cause
+     */
     public BuildScriptException(String message, Throwable cause) {
       super(message, cause);
     }

@@ -9,6 +9,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id("application")
     id("maven-publish")
+    id("checkstyle")
     alias(libs.plugins.shadow)
 }
 
@@ -71,4 +72,8 @@ publishing {
             }
         }
     }
+}
+
+checkstyle {
+    toolVersion = "12.1.1"
 }

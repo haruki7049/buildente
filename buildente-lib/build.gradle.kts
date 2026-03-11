@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("maven-publish")
+    id("checkstyle")
 }
 
 repositories {
@@ -52,4 +53,8 @@ publishing {
             }
         }
     }
+}
+
+checkstyle {
+    toolVersion = "12.1.1"
 }
