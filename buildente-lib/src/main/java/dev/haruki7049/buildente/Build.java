@@ -94,6 +94,35 @@ public class Build {
   }
 
   /**
+   * Creates a compilation step for the given {@link Module} with an attached {@link
+   * ManifestConfig}.
+   *
+   * <p>The manifest is not used during compilation. It is carried on the returned {@link
+   * Executable} so that a subsequent {@link #addJar(String, Executable)} call can inherit it
+   * automatically, without requiring the caller to pass the manifest a second time:
+   *
+   * <pre>{@code
+   * ManifestConfig mf = new ManifestConfig()
+   *     .setMainClass("com.example.Main")
+   *     .addAttribute("Built-By", "Buildente");
+   *
+   * Executable exe = b.addExecutable("com.example.Main", mod, mf);
+   *
+   * // The jar step picks up mf from exe — no need to pass it again
+   * JarStep jar = b.addJar("myapp", exe);
+   * b.getInstallStep().dependOn(jar);
+   * }</pre>
+   *
+   * @param name the fully-qualified entry-point class name (e.g. {@code "com.example.App"})
+   * @param module the module describing the source directory and compiler flags
+   * @param manifest the manifest configuration to embed when packaging a JAR
+   * @return a new {@link Executable} step carrying {@code manifest}
+   */
+  public Executable addExecutable(String name, Module module, ManifestConfig manifest) {
+    return new Executable(name, module, manifest);
+  }
+
+  /**
    * Creates a run step that executes a compiled artifact. Mirrors {@code b.addRunArtifact(exe)} in
    * Zig.
    *
@@ -102,6 +131,65 @@ public class Build {
    */
   public RunStep addRunArtifact(Executable exe) {
     return new RunStep(exe);
+  }
+
+  /**
+   * Creates a JAR packaging step with no custom manifest.
+   *
+   * <p>The {@code jar} tool will generate a minimal default {@code MANIFEST.MF}. The produced
+   * archive is placed at {@code build/libs/<jarName>.jar}.
+   *
+   * <pre>{@code
+   * JarStep jar = b.addJar("myapp", exe);
+   * b.getInstallStep().dependOn(jar);
+   * }</pre>
+   *
+   * @param jarName the base name of the output JAR (without {@code .jar} extension)
+   * @param exe the compilation step whose output is packaged
+   * @return a new {@link JarStep} that automatically depends on {@code exe}
+   */
+  public JarStep addJar(String jarName, Executable exe) {
+    return new JarStep(jarName, exe);
+  }
+
+  /**
+   * Creates a JAR packaging step with a programmatic manifest defined by a {@link ManifestConfig}.
+   *
+   * <pre>{@code
+   * ManifestConfig mf = new ManifestConfig()
+   *     .setMainClass("com.example.Main")
+   *     .addAttribute("Built-By", "Buildente");
+   *
+   * JarStep jar = b.addJar("myapp", exe, mf);
+   * b.getInstallStep().dependOn(jar);
+   * }</pre>
+   *
+   * @param jarName the base name of the output JAR (without {@code .jar} extension)
+   * @param exe the compilation step whose output is packaged
+   * @param manifest manifest attributes to embed in the JAR
+   * @return a new {@link JarStep} that automatically depends on {@code exe}
+   */
+  public JarStep addJar(String jarName, Executable exe, ManifestConfig manifest) {
+    return new JarStep(jarName, exe, manifest);
+  }
+
+  /**
+   * Creates a JAR packaging step that forwards an existing {@code MANIFEST.MF} file to the {@code
+   * jar} tool.
+   *
+   * <pre>{@code
+   * JarStep jar = b.addJarWithManifestFile("myapp", exe, "META-INF/MANIFEST.MF");
+   * b.getInstallStep().dependOn(jar);
+   * }</pre>
+   *
+   * @param jarName the base name of the output JAR (without {@code .jar} extension)
+   * @param exe the compilation step whose output is packaged
+   * @param manifestFilePath path to an existing {@code MANIFEST.MF} file, relative to the working
+   *     directory
+   * @return a new {@link JarStep} that automatically depends on {@code exe}
+   */
+  public JarStep addJarWithManifestFile(String jarName, Executable exe, String manifestFilePath) {
+    return new JarStep(jarName, exe, manifestFilePath);
   }
 
   /**

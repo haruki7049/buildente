@@ -17,6 +17,19 @@ import java.util.List;
  * must see all classes in a package simultaneously to resolve cross-file references.
  *
  * <p>Compiled {@code .class} files are placed under {@value #OUTPUT_DIR}.
+ *
+ * <p>An optional {@link ManifestConfig} can be attached at construction time. When present, it is
+ * automatically picked up by {@link JarStep} so callers do not need to pass the manifest a second
+ * time to {@link Build#addJar(String, Executable)}:
+ *
+ * <pre>{@code
+ * ManifestConfig mf = new ManifestConfig().setMainClass("com.example.Main");
+ * Executable exe = b.addExecutable("com.example.Main", mod, mf);
+ *
+ * // JarStep inherits the manifest from exe automatically
+ * JarStep jar = b.addJar("myapp", exe);
+ * b.getInstallStep().dependOn(jar);
+ * }</pre>
  */
 public class Executable extends Step {
 
@@ -34,23 +47,42 @@ public class Executable extends Step {
    */
   private final Module module;
 
+  /**
+   * Optional manifest configuration that {@link JarStep} inherits automatically when no manifest is
+   * supplied explicitly to {@link Build#addJar}. May be {@code null}.
+   */
+  private final ManifestConfig manifestConfig;
+
   // -------------------------------------------------------------------------
   // Constructors
   // -------------------------------------------------------------------------
 
   /**
-   * Creates an executable step backed by a {@link Module}.
-   *
-   * <p>This is the only non-deprecated constructor. Modules decouple the description of what to
-   * compile (source directory, compiler flags) from the step that performs compilation.
+   * Creates an executable step backed by a {@link Module}, with no manifest attached.
    *
    * @param name the fully-qualified class name of the entry point (e.g. {@code "com.example.App"})
    * @param module the module describing the source directory to compile
    */
   public Executable(String name, Module module) {
+    this(name, module, null);
+  }
+
+  /**
+   * Creates an executable step backed by a {@link Module} with an attached {@link ManifestConfig}.
+   *
+   * <p>The manifest is not used during compilation; it is carried on this object so that a
+   * subsequent {@link JarStep} can inherit it without requiring the caller to pass it again.
+   *
+   * @param name the fully-qualified class name of the entry point (e.g. {@code "com.example.App"})
+   * @param module the module describing the source directory to compile
+   * @param manifestConfig the manifest configuration to embed when packaging a JAR, or {@code null}
+   *     for no custom manifest
+   */
+  public Executable(String name, Module module, ManifestConfig manifestConfig) {
     super("compile:" + name);
     this.executableName = name;
     this.module = module;
+    this.manifestConfig = manifestConfig;
   }
 
   // -------------------------------------------------------------------------
@@ -74,6 +106,18 @@ public class Executable extends Step {
    */
   public Module getModule() {
     return module;
+  }
+
+  /**
+   * Returns the {@link ManifestConfig} attached to this executable, if any.
+   *
+   * <p>{@link JarStep} calls this method when no manifest was provided explicitly, allowing the
+   * manifest to be declared once on the executable and inherited by all JAR steps that package it.
+   *
+   * @return the manifest config, or {@code null} if none was supplied
+   */
+  public ManifestConfig getManifestConfig() {
+    return manifestConfig;
   }
 
   // -------------------------------------------------------------------------
