@@ -9,8 +9,8 @@ import dev.haruki7049.buildente.RunStep;
 /**
  * Sample Buildente build script demonstrating fat-JAR creation with external Maven dependencies.
  *
- * <p>Dependencies are declared in {@code deps.properties}. Run {@code bdt update} once after
- * adding or changing entries to compute and record {@code sha256} hashes.
+ * <p>Dependencies are declared in {@code deps.properties}. Run {@code bdt update} once after adding
+ * or changing entries to compute and record {@code sha256} hashes.
  *
  * <p>Available steps:
  *

@@ -1,4 +1,4 @@
-package dev.haruki7049.buildente;
+package dev.haruki7049.buildente.deps;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +84,7 @@ public final class DepsProperties {
    *
    * <p>Only lines whose keys match the pattern {@code <alias>.id} are used to discover aliases. For
    * each discovered alias the corresponding {@code .repo} and {@code .sha256} keys are read (both
-   * optional at parse time; {@link ScriptRunner} enforces that {@code sha256} is present at build
+   * optional at parse time; {@code ScriptRunner} enforces that {@code sha256} is present at build
    * time).
    *
    * @param path path to the {@code deps.properties} file
@@ -180,7 +180,7 @@ public final class DepsProperties {
    * Returns a new {@link DepsProperties} identical to this one except that the {@code sha256} for
    * {@code alias} is set to {@code sha256}.
    *
-   * <p>Used by {@link UpdateCommand} to record the computed hash back into the file.
+   * <p>Used by {@link Updater} to record the computed hash back into the file.
    *
    * @param alias the alias whose hash to update
    * @param sha256 the new 64-character hex SHA-256 string

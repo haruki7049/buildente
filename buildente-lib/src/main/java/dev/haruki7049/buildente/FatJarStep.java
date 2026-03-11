@@ -3,7 +3,6 @@ package dev.haruki7049.buildente;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -30,9 +29,9 @@ import java.util.zip.ZipOutputStream;
  *   <li>Write {@code META-INF/MANIFEST.MF} first, constructed from the {@link ManifestConfig}
  *       attached to the {@link Executable} (or an empty manifest if none is present).
  *   <li>Walk {@link Executable#OUTPUT_DIR} recursively and write every {@code .class} file.
- *   <li>For each dependency JAR resolved from {@code deps.properties}, open it as a
- *       {@link ZipInputStream} and copy every entry except {@code META-INF/MANIFEST.MF} (which
- *       was already written in step 2) and duplicate entries (first writer wins).
+ *   <li>For each dependency JAR resolved from {@code deps.properties}, open it as a {@link
+ *       ZipInputStream} and copy every entry except {@code META-INF/MANIFEST.MF} (which was already
+ *       written in step 2) and duplicate entries (first writer wins).
  * </ol>
  *
  * <p>All merging is done in-process using the standard {@link java.util.zip} API — no external
@@ -133,8 +132,7 @@ public final class FatJarStep extends Step {
     // Track written entry names to skip duplicates
     Set<String> written = new HashSet<>();
 
-    try (ZipOutputStream zos =
-        new ZipOutputStream(new FileOutputStream(outputPath.toFile()))) {
+    try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputPath.toFile()))) {
 
       // 1. Write MANIFEST.MF
       writeManifest(zos, written);
@@ -199,7 +197,8 @@ public final class FatJarStep extends Step {
     Path classesRoot = Path.of(Executable.OUTPUT_DIR);
     if (!Files.isDirectory(classesRoot)) {
       throw new IllegalStateException(
-          "[buildente] Compiled classes directory not found: " + classesRoot.toAbsolutePath()
+          "[buildente] Compiled classes directory not found: "
+              + classesRoot.toAbsolutePath()
               + ". Was the compile step executed?");
     }
 
@@ -234,8 +233,7 @@ public final class FatJarStep extends Step {
    * @param written the set of already-written entry names (updated in place)
    * @throws IOException if the dependency JAR cannot be read
    */
-  private void mergeJar(ZipOutputStream zos, Path jarPath, Set<String> written)
-      throws IOException {
+  private void mergeJar(ZipOutputStream zos, Path jarPath, Set<String> written) throws IOException {
     System.out.println("[buildente]   merging " + jarPath.getFileName());
 
     try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(jarPath))) {

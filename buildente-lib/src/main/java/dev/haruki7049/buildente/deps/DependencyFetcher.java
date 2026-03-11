@@ -1,4 +1,4 @@
-package dev.haruki7049.buildente;
+package dev.haruki7049.buildente.deps;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -150,15 +150,14 @@ public final class DependencyFetcher {
   }
 
   // -------------------------------------------------------------------------
-  // Hash computation (used by UpdateCommand when filling in sha256 entries)
+  // Hash computation (used by Updater when filling in sha256 entries)
   // -------------------------------------------------------------------------
 
   /**
    * Downloads a JAR from {@code url} into a temporary file, computes its SHA-256 hex digest, and
    * deletes the temporary file.
    *
-   * <p>Called by {@link UpdateCommand} when populating {@code sha256} entries in {@code
-   * deps.properties}.
+   * <p>Called by {@link Updater} when populating {@code sha256} entries in {@code deps.properties}.
    *
    * @param url the URL to download from
    * @param cacheDir directory to use for the temporary download

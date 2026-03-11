@@ -1,4 +1,4 @@
-package dev.haruki7049.buildente;
+package dev.haruki7049.buildente.deps;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,7 +36,7 @@ public final class Updater {
    * Runs the update lifecycle for the project rooted at {@code projectRoot}.
    *
    * @param projectRoot directory that contains (or should contain) {@code deps.properties}
-   * @return an {@link Result} describing what happened
+   * @return a {@link Result} describing what happened
    */
   public static Result run(Path projectRoot) {
     Path depsPath = projectRoot.resolve(DepsProperties.FILE_NAME);
@@ -203,37 +203,65 @@ public final class Updater {
       return new Result(Status.SUCCESS, u, s, 0, l, null);
     }
 
-    /** Returns the outcome category. */
+    /**
+     * Returns the outcome category.
+     *
+     * @return the {@link Status} of this result
+     */
     public Status getStatus() {
       return status;
     }
 
-    /** Number of {@code sha256} values newly computed and written. */
+    /**
+     * Number of {@code sha256} values newly computed and written.
+     *
+     * @return count of updated entries
+     */
     public int getUpdated() {
       return updated;
     }
 
-    /** Number of entries skipped because they already had a hash. */
+    /**
+     * Number of entries skipped because they already had a hash.
+     *
+     * @return count of skipped entries
+     */
     public int getSkipped() {
       return skipped;
     }
 
-    /** Number of aliases that could not be resolved due to errors. */
+    /**
+     * Number of aliases that could not be resolved due to errors.
+     *
+     * @return count of errored entries
+     */
     public int getErrors() {
       return errors;
     }
 
-    /** Accumulated human-readable log lines produced during resolution. */
+    /**
+     * Accumulated human-readable log lines produced during resolution.
+     *
+     * @return the log string, never {@code null}
+     */
     public String getLog() {
       return log;
     }
 
-    /** The underlying exception, or {@code null} when not applicable. */
+    /**
+     * The underlying exception, or {@code null} when not applicable.
+     *
+     * @return the cause exception, or {@code null}
+     */
     public Exception getCause() {
       return cause;
     }
 
-    /** Returns {@code true} when the exit code should be zero. */
+    /**
+     * Returns {@code true} when the exit code should be zero.
+     *
+     * @return {@code true} if the update succeeded or was a no-op
+     */
     public boolean isSuccess() {
       return status == Status.SUCCESS
           || status == Status.NOTHING_TO_UPDATE

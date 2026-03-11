@@ -1,4 +1,4 @@
-package dev.haruki7049.buildente;
+package dev.haruki7049.buildente.deps;
 
 /**
  * A Maven dependency coordinate in {@code groupId:artifactId:version} (GAV) form.

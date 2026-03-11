@@ -27,7 +27,7 @@ import java.util.Map;
  * b.executeStep(args.length > 0 ? args[0] : "install");
  * }</pre>
  *
- * <p>When {@code deps.properties} is present and has been updated via {@code bdt update}, {@link
+ * <p>When {@code deps.properties} is present and has been updated via {@code bdt update}, {@code
  * ScriptRunner} calls {@link #setResolvedJars(Map)} before invoking the user script. Every {@link
  * Module} created afterward via {@link #createModule(String)} automatically inherits the resolved
  * jar map so that {@link Module#addDependency(String)} can look up JAR paths at compile time.
@@ -47,9 +47,9 @@ public class Build {
   private final List<String> args;
 
   /**
-   * Map from dependency alias to cached JAR {@link Path}, populated by {@link ScriptRunner} from
-   * the contents of {@code deps.properties}. Empty when no {@code deps.properties} is present or
-   * it contains no entries.
+   * Map from dependency alias to cached JAR {@link Path}, populated by {@code ScriptRunner} from
+   * the contents of {@code deps.properties}. Empty when no {@code deps.properties} is present or it
+   * contains no entries.
    */
   private Map<String, Path> resolvedJars = Collections.emptyMap();
 
@@ -69,11 +69,12 @@ public class Build {
   // -------------------------------------------------------------------------
 
   /**
-   * Injects the resolved dependency JAR map, populated from {@code deps.properties} by {@link
+   * Injects the resolved dependency JAR map, populated from {@code deps.properties} by {@code
    * ScriptRunner}.
    *
-   * <p>This method must be called <em>before</em> the user script's {@link BuildScript#build(Build)}
-   * runs, so that any {@link Module} created by the script inherits the map automatically.
+   * <p>This method must be called <em>before</em> the user script's {@link
+   * BuildScript#build(Build)} runs, so that any {@link Module} created by the script inherits the
+   * map automatically.
    *
    * @param jars map from alias (e.g. {@code "guava"}) to absolute JAR {@link Path}
    */
@@ -280,9 +281,7 @@ public class Build {
     target.make();
   }
 
-  /**
-   * Prints all registered top-level steps to standard output.
-   */
+  /** Prints all registered top-level steps to standard output. */
   public void printAvailableSteps() {
     System.out.println("[buildente] Available steps:");
     for (Map.Entry<String, Step> entry : steps.entrySet()) {

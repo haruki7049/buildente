@@ -1,5 +1,7 @@
 package dev.haruki7049.buildente;
 
+import dev.haruki7049.buildente.deps.DepsProperties;
+import dev.haruki7049.buildente.deps.Updater;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;

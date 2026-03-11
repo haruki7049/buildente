@@ -1,5 +1,9 @@
-package dev.haruki7049.buildente;
+package dev.haruki7049.buildente.runner;
 
+import dev.haruki7049.buildente.Build;
+import dev.haruki7049.buildente.BuildScript;
+import dev.haruki7049.buildente.deps.DependencyFetcher;
+import dev.haruki7049.buildente.deps.DepsProperties;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
