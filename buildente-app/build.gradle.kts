@@ -28,9 +28,6 @@ dependencies {
 
 // Apply a specific Java toolchain to ease working on different environments.
 java {
-    withJavadocJar()
-    withSourcesJar()
-
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
