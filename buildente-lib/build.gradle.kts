@@ -11,7 +11,10 @@ repositories {
     maven { url = uri("https://codeberg.org/api/packages/haruki7049/maven") }
 }
 
-dependencies {}
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
 
 java {
     withJavadocJar()
@@ -24,6 +27,10 @@ java {
 
 tasks.withType<JavaCompile> {
     options.release = 17
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
 }
 
 publishing {

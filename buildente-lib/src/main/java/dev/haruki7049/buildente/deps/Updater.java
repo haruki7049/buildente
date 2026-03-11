@@ -113,7 +113,7 @@ public final class Updater {
     }
 
     if (errors > 0) {
-      return Result.fetchErrors(errors, log.toString());
+      return Result.fetchErrors(updated, skipped, errors, log.toString());
     }
 
     if (updated == 0) {
@@ -187,8 +187,8 @@ public final class Updater {
       return new Result(Status.EMPTY, 0, 0, 0, "", null);
     }
 
-    static Result fetchErrors(int n, String log) {
-      return new Result(Status.FETCH_ERRORS, 0, 0, n, log, null);
+    static Result fetchErrors(int updated, int skipped, int errors, String log) {
+      return new Result(Status.FETCH_ERRORS, updated, skipped, errors, log, null);
     }
 
     static Result nothingToUpdate(int s, String l) {
@@ -265,7 +265,8 @@ public final class Updater {
     public boolean isSuccess() {
       return status == Status.SUCCESS
           || status == Status.NOTHING_TO_UPDATE
-          || status == Status.EMPTY;
+          || status == Status.EMPTY
+          || status == Status.NO_FILE;
     }
   }
 }
