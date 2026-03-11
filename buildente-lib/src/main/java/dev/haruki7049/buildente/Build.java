@@ -15,7 +15,8 @@ import java.util.Map;
  * <pre>{@code
  * Build b = new Build(Arrays.asList(args));
  *
- * Executable exe = b.addExecutable("Hello", "src/Hello.java");
+ * Module     mod = b.createModule("src");
+ * Executable exe = b.addExecutable("Hello", mod);
  * RunStep    run = b.addRunArtifact(exe);
  *
  * b.step("run", "Compile and run Hello").dependOn(run);
@@ -54,15 +55,42 @@ public class Build {
   // -------------------------------------------------------------------------
 
   /**
-   * Creates a compilation step for a Java source file. Mirrors {@code b.addExecutable(name,
-   * source)} in Zig.
+   * Creates a {@link Module} backed by the given source directory.
    *
-   * @param name the fully-qualified class name of the program
-   * @param sourceFile path to the {@code .java} source file
+   * <p>Mirrors {@code b.createModule(.{ .root_source_file = b.path("src/main.zig") })} in Zig,
+   * adapted for Java's package-centric model. Because Java {@code import} statements reference
+   * packages (i.e. directory hierarchies) rather than individual files, the natural compilation
+   * unit is a <em>source root directory</em>. At build time {@link Module#resolveSourceFiles()}
+   * walks the directory recursively and passes every discovered {@code .java} file to a single
+   * {@code javac} invocation, ensuring cross-package references within the module are resolved.
+   *
+   * <p>Example:
+   *
+   * <pre>{@code
+   * Module mod = b.createModule("src");
+   * mod.addExtraArg("-source").addExtraArg("17");
+   * Executable exe = b.addExecutable("com.example.App", mod);
+   * }</pre>
+   *
+   * @param sourceDir path to the source directory containing {@code .java} files, relative to the
+   *     working directory (e.g. {@code "src"} or {@code "src/main/java"})
+   * @return a new, mutable {@link Module} instance
+   */
+  public Module createModule(String sourceDir) {
+    return new Module(sourceDir);
+  }
+
+  /**
+   * Creates a compilation step for the given {@link Module}.
+   *
+   * <p>Mirrors {@code b.addExecutable(.{ .name = name, .root_module = module })} in Zig.
+   *
+   * @param name the fully-qualified entry-point class name (e.g. {@code "com.example.App"})
+   * @param module the module describing the source directory and compiler flags
    * @return a new {@link Executable} step (not yet wired to any top-level step)
    */
-  public Executable addExecutable(String name, String sourceFile) {
-    return new Executable(name, sourceFile);
+  public Executable addExecutable(String name, Module module) {
+    return new Executable(name, module);
   }
 
   /**
