@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "bdt", version = "0.1.0", mixinStandardHelpOptions = true, description = "Buildente — a Java build system inspired by Zig's build system")
+@CommandLine.Command(name = "bdt", version = "0.0.0", mixinStandardHelpOptions = true, description = "Buildente — a Java build system inspired by Zig's build system")
 public class Cli implements Callable<Integer> {
 
   @CommandLine.Unmatched
