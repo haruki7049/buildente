@@ -22,8 +22,8 @@ import javax.tools.ToolProvider;
  *   <li><strong>Compile</strong> – invokes {@link javax.tools.JavaCompiler} in-process (no external
  *       {@code javac} process), forwarding the current JVM classpath so the script can import
  *       {@code dev.haruki7049.buildente.*}.
- *   <li><strong>Load</strong> – loads the compiled {@code build} class from the temporary output
- *       directory via {@link URLClassLoader}.
+ *   <li><strong>Load</strong> – loads the compiled {@code build} class from the {@code .buildente/}
+ *       output directory inside the project root via {@link URLClassLoader}.
  *   <li><strong>Execute</strong> – casts the class to {@link BuildScript}, calls {@link
  *       BuildScript#build(Build)}, then runs the requested step.
  * </ol>
@@ -44,8 +44,11 @@ public final class ScriptRunner {
   /** Name of the compiled class Buildente instantiates. */
   private static final String SCRIPT_CLASS = "Buildente";
 
-  /** Subdirectory inside the system temp dir used for compiled script classes. */
-  private static final String COMPILED_DIR_PREFIX = "buildente-script-";
+  /**
+   * Name of the subdirectory created inside the project root to hold compiled script classes. This
+   * replaces the former system-temp-based approach.
+   */
+  private static final String BUILDENTE_DIR = ".buildente";
 
   // Utility class — no instances
   private ScriptRunner() {}
@@ -56,7 +59,8 @@ public final class ScriptRunner {
    * <p>This method encapsulates the full lifecycle: locate → compile → load → build-graph
    * definition → step execution.
    *
-   * @param scriptDir directory that contains {@code build.java}
+   * @param scriptDir directory that contains {@code build.java}; also used as the project root for
+   *     placing the {@code .buildente/} output directory
    * @param b the {@link Build} instance passed to the script
    * @param stepName the top-level step to execute after the graph is defined
    * @throws BuildScriptException if any phase of the lifecycle fails
@@ -72,7 +76,7 @@ public final class ScriptRunner {
     System.out.println("[buildente] Found script: " + scriptFile.toAbsolutePath());
 
     // ------------------------------------------------------------------ 2. Compile
-    Path outputDir = compile(scriptFile);
+    Path outputDir = compile(scriptFile, scriptDir);
 
     // ------------------------------------------------------------------ 3. Load
     BuildScript script = load(outputDir);
@@ -95,11 +99,15 @@ public final class ScriptRunner {
    * Compiles {@code scriptFile} using the in-process Java compiler. The current JVM classpath is
    * forwarded so the script can reference Buildente library classes.
    *
+   * <p>Compiled {@code .class} files are written to {@code <projectRoot>/.buildente/}.
+   *
    * @param scriptFile path to {@code build.java}
+   * @param projectRoot project root directory; the {@code .buildente/} output directory is created
+   *     here
    * @return path to the directory containing the compiled {@code .class} files
    * @throws BuildScriptException if the compiler is unavailable or compilation fails
    */
-  private static Path compile(Path scriptFile) {
+  private static Path compile(Path scriptFile, Path projectRoot) {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     if (compiler == null) {
       throw new BuildScriptException(
@@ -107,12 +115,12 @@ public final class ScriptRunner {
               + "Make sure you are running on a JDK, not just a JRE.");
     }
 
-    // Create a temp directory for compiled .class files
+    // Create (or reuse) the .buildente directory inside the project root
     File outputDir;
     try {
-      outputDir = createTempOutputDir();
+      outputDir = resolveOutputDir(projectRoot);
     } catch (Exception e) {
-      throw new BuildScriptException("Failed to create temp output directory", e);
+      throw new BuildScriptException("Failed to create output directory", e);
     }
 
     System.out.println("[buildente] Compiling script -> " + outputDir.getAbsolutePath());
@@ -164,7 +172,7 @@ public final class ScriptRunner {
    * Loads the compiled {@code build} class from {@code outputDir} and instantiates it as a {@link
    * BuildScript}.
    *
-   * @param outputDir directory produced by {@link #compile(Path)}
+   * @param outputDir directory produced by {@link #compile(Path, Path)}
    * @return an instance of the user's {@code build} class
    * @throws BuildScriptException if loading or instantiation fails
    */
@@ -204,13 +212,23 @@ public final class ScriptRunner {
   // Helpers
   // ------------------------------------------------------------------
 
-  private static File createTempOutputDir() throws Exception {
-    File tmp = File.createTempFile(COMPILED_DIR_PREFIX, "");
-    if (!tmp.delete() || !tmp.mkdir()) {
-      throw new IllegalStateException("Cannot create temp directory: " + tmp);
+  /**
+   * Returns the {@code .buildente/} directory inside {@code projectRoot}, creating it if it does
+   * not already exist.
+   *
+   * <p>Unlike the former {@code createTempOutputDir()} approach, this directory is persistent and
+   * lives alongside the project source tree rather than in the system temp area.
+   *
+   * @param projectRoot the project root directory
+   * @return the {@code File} representing {@code <projectRoot>/.buildente}
+   * @throws IllegalStateException if the directory cannot be created
+   */
+  private static File resolveOutputDir(Path projectRoot) {
+    File outputDir = projectRoot.resolve(BUILDENTE_DIR).toFile();
+    if (!outputDir.exists() && !outputDir.mkdirs()) {
+      throw new IllegalStateException("Cannot create output directory: " + outputDir);
     }
-    tmp.deleteOnExit();
-    return tmp;
+    return outputDir;
   }
 
   // ------------------------------------------------------------------
