@@ -30,11 +30,21 @@
             # Nix
             programs.nixfmt.enable = true;
 
-            # GitHub Actions
-            programs.actionlint.enable = true;
+            # Java
+            programs.google-java-format.enable = true;
+
+            # kotlin for Gradle
+            programs.ktlint.enable = true;
+
+            # XML
+            programs.xmllint.enable = true;
 
             # Markdown
             programs.mdformat.enable = true;
+
+            # ShellScript
+            programs.shellcheck.enable = true;
+            programs.shfmt.enable = true;
           };
 
           devShells.default = pkgs.mkShell {
