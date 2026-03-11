@@ -1,6 +1,5 @@
 package dev.haruki7049.buildente;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -94,8 +93,8 @@ public final class Module {
   }
 
   /**
-   * Discovers all {@code .java} files under {@link #sourceDir} recursively and returns their
-   * paths as strings.
+   * Discovers all {@code .java} files under {@link #sourceDir} recursively and returns their paths
+   * as strings.
    *
    * <p>This is called by {@link Executable} at step-execution time rather than at module-creation
    * time, so that files added to the directory after the module is declared are still picked up.
@@ -146,8 +145,7 @@ public final class Module {
   // -------------------------------------------------------------------------
 
   /**
-   * Appends a single extra argument forwarded verbatim to {@code javac}. Call once per token,
-   * e.g.:
+   * Appends a single extra argument forwarded verbatim to {@code javac}. Call once per token, e.g.:
    *
    * <pre>{@code
    * mod.addExtraArg("-source").addExtraArg("17");

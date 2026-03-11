@@ -81,8 +81,8 @@ public class Executable extends Step {
   // -------------------------------------------------------------------------
 
   /**
-   * Invokes {@code javac} via {@link ProcessBuilder} to compile all {@code .java} files found
-   * under the module's source directory. Output is placed in {@value #OUTPUT_DIR}.
+   * Invokes {@code javac} via {@link ProcessBuilder} to compile all {@code .java} files found under
+   * the module's source directory. Output is placed in {@value #OUTPUT_DIR}.
    *
    * <p>The compilation command is assembled as:
    *

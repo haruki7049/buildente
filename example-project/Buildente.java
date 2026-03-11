@@ -13,6 +13,7 @@ import dev.haruki7049.buildente.RunStep;
  * URLClassLoader}.
  *
  * <p>Rules:
+ *
  * <ul>
  *   <li>The file must be named exactly {@code Buildente.java}.
  *   <li>The public class inside must be named exactly {@code Buildente}.
