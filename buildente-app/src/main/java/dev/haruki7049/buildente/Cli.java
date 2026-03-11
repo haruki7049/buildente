@@ -1,19 +1,20 @@
 package dev.haruki7049.buildente;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.io.FileWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "bdt", version = "0.1.0", mixinStandardHelpOptions = true, description = "Buildente — a Java build system inspired by Zig's build system")
+@CommandLine.Command(
+    name = "bdt",
+    version = "0.1.0",
+    mixinStandardHelpOptions = true,
+    description = "Buildente — a Java build system inspired by Zig's build system")
 public class Cli implements Callable<Integer> {
 
-  @CommandLine.Unmatched
-  List<String> args = new ArrayList<>();
+  @CommandLine.Unmatched List<String> args = new ArrayList<>();
 
   @Override
   public Integer call() throws Exception {
