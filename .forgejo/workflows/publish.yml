@@ -9,7 +9,7 @@ on:
 
 jobs:
   publish:
-    runs-on: codeberg-tiny
+    runs-on: codeberg-small
 
     steps:
       - name: Checkout
