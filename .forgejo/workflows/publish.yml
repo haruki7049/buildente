@@ -36,7 +36,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Publish to Codeberg Maven
-        run: ./gradlew publish --no-daemon
+        run: |
+          echo $PROJECT_VERSION
+          ./gradlew publish --no-daemon
         env:
           CODEBERG_USERNAME: haruki7049
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
