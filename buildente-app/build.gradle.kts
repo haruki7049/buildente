@@ -60,6 +60,15 @@ publishing {
             version = "0.0.0"
 
             from(components["shadow"])
+
+            pom {
+                url = "https://codeberg.org/haruki7049/buildente"
+                scm {
+                    url = "https://codeberg.org/haruki7049/buildente"
+                    connection = "scm:git:https://codeberg.org/haruki7049/buildente.git"
+                    developerConnection = "scm:git:ssh://codeberg.org/haruki7049/buildente.git"
+                }
+            }
         }
     }
 }
