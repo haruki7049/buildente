@@ -1,5 +1,7 @@
 package dev.haruki7049.buildente;
 
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,11 @@ import java.util.Map;
  *
  * b.executeStep(args.length > 0 ? args[0] : "install");
  * }</pre>
+ *
+ * <p>When {@code deps.properties} is present and has been updated via {@code bdt update}, {@link
+ * ScriptRunner} calls {@link #setResolvedJars(Map)} before invoking the user script. Every {@link
+ * Module} created afterward via {@link #createModule(String)} automatically inherits the resolved
+ * jar map so that {@link Module#addDependency(String)} can look up JAR paths at compile time.
  */
 public class Build {
 
@@ -40,6 +47,13 @@ public class Build {
   private final List<String> args;
 
   /**
+   * Map from dependency alias to cached JAR {@link Path}, populated by {@link ScriptRunner} from
+   * the contents of {@code deps.properties}. Empty when no {@code deps.properties} is present or
+   * it contains no entries.
+   */
+  private Map<String, Path> resolvedJars = Collections.emptyMap();
+
+  /**
    * Creates a Build instance.
    *
    * @param args command-line arguments (first element is typically the step name)
@@ -51,33 +65,54 @@ public class Build {
   }
 
   // -------------------------------------------------------------------------
+  // Dependency injection (called by ScriptRunner before user script runs)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Injects the resolved dependency JAR map, populated from {@code deps.properties} by {@link
+   * ScriptRunner}.
+   *
+   * <p>This method must be called <em>before</em> the user script's {@link BuildScript#build(Build)}
+   * runs, so that any {@link Module} created by the script inherits the map automatically.
+   *
+   * @param jars map from alias (e.g. {@code "guava"}) to absolute JAR {@link Path}
+   */
+  public void setResolvedJars(Map<String, Path> jars) {
+    this.resolvedJars =
+        jars != null
+            ? Collections.unmodifiableMap(new LinkedHashMap<>(jars))
+            : Collections.emptyMap();
+  }
+
+  // -------------------------------------------------------------------------
   // Factory methods (mirrors the Zig build API)
   // -------------------------------------------------------------------------
 
   /**
    * Creates a {@link Module} backed by the given source directory.
    *
+   * <p>The module automatically receives the current {@link #resolvedJars} map, so that calls to
+   * {@link Module#addDependency(String)} on the returned module are backed by the data from {@code
+   * deps.properties}.
+   *
    * <p>Mirrors {@code b.createModule(.{ .root_source_file = b.path("src/main.zig") })} in Zig,
-   * adapted for Java's package-centric model. Because Java {@code import} statements reference
-   * packages (i.e. directory hierarchies) rather than individual files, the natural compilation
-   * unit is a <em>source root directory</em>. At build time {@link Module#resolveSourceFiles()}
-   * walks the directory recursively and passes every discovered {@code .java} file to a single
-   * {@code javac} invocation, ensuring cross-package references within the module are resolved.
+   * adapted for Java's package-centric model.
    *
    * <p>Example:
    *
    * <pre>{@code
    * Module mod = b.createModule("src");
+   * mod.addDependency("guava");
    * mod.addExtraArg("-source").addExtraArg("17");
    * Executable exe = b.addExecutable("com.example.App", mod);
    * }</pre>
    *
    * @param sourceDir path to the source directory containing {@code .java} files, relative to the
    *     working directory (e.g. {@code "src"} or {@code "src/main/java"})
-   * @return a new, mutable {@link Module} instance
+   * @return a new, mutable {@link Module} instance backed by the current resolved-jars map
    */
   public Module createModule(String sourceDir) {
-    return new Module(sourceDir);
+    return new Module(sourceDir, resolvedJars);
   }
 
   /**
@@ -99,7 +134,7 @@ public class Build {
    *
    * <p>The manifest is not used during compilation. It is carried on the returned {@link
    * Executable} so that a subsequent {@link #addJar(String, Executable)} call can inherit it
-   * automatically, without requiring the caller to pass the manifest a second time:
+   * automatically:
    *
    * <pre>{@code
    * ManifestConfig mf = new ManifestConfig()
@@ -107,8 +142,6 @@ public class Build {
    *     .addAttribute("Built-By", "Buildente");
    *
    * Executable exe = b.addExecutable("com.example.Main", mod, mf);
-   *
-   * // The jar step picks up mf from exe — no need to pass it again
    * JarStep jar = b.addJar("myapp", exe);
    * b.getInstallStep().dependOn(jar);
    * }</pre>
@@ -136,14 +169,6 @@ public class Build {
   /**
    * Creates a JAR packaging step with no custom manifest.
    *
-   * <p>The {@code jar} tool will generate a minimal default {@code MANIFEST.MF}. The produced
-   * archive is placed at {@code build/libs/<jarName>.jar}.
-   *
-   * <pre>{@code
-   * JarStep jar = b.addJar("myapp", exe);
-   * b.getInstallStep().dependOn(jar);
-   * }</pre>
-   *
    * @param jarName the base name of the output JAR (without {@code .jar} extension)
    * @param exe the compilation step whose output is packaged
    * @return a new {@link JarStep} that automatically depends on {@code exe}
@@ -154,15 +179,6 @@ public class Build {
 
   /**
    * Creates a JAR packaging step with a programmatic manifest defined by a {@link ManifestConfig}.
-   *
-   * <pre>{@code
-   * ManifestConfig mf = new ManifestConfig()
-   *     .setMainClass("com.example.Main")
-   *     .addAttribute("Built-By", "Buildente");
-   *
-   * JarStep jar = b.addJar("myapp", exe, mf);
-   * b.getInstallStep().dependOn(jar);
-   * }</pre>
    *
    * @param jarName the base name of the output JAR (without {@code .jar} extension)
    * @param exe the compilation step whose output is packaged
@@ -177,11 +193,6 @@ public class Build {
    * Creates a JAR packaging step that forwards an existing {@code MANIFEST.MF} file to the {@code
    * jar} tool.
    *
-   * <pre>{@code
-   * JarStep jar = b.addJarWithManifestFile("myapp", exe, "META-INF/MANIFEST.MF");
-   * b.getInstallStep().dependOn(jar);
-   * }</pre>
-   *
    * @param jarName the base name of the output JAR (without {@code .jar} extension)
    * @param exe the compilation step whose output is packaged
    * @param manifestFilePath path to an existing {@code MANIFEST.MF} file, relative to the working
@@ -190,6 +201,30 @@ public class Build {
    */
   public JarStep addJarWithManifestFile(String jarName, Executable exe, String manifestFilePath) {
     return new JarStep(jarName, exe, manifestFilePath);
+  }
+
+  /**
+   * Creates a fat-JAR (uber-JAR) packaging step that merges the compiled class files and all
+   * dependency JARs declared on the module into a single self-contained archive.
+   *
+   * <p>The produced JAR can be executed directly with {@code java -jar} without any external
+   * classpath configuration. The {@link ManifestConfig} attached to {@code exe} is used as the
+   * manifest; set {@code Main-Class} on it to make the fat JAR executable.
+   *
+   * <pre>{@code
+   * ManifestConfig mf = new ManifestConfig().setMainClass("com.example.Main");
+   * Executable exe = b.addExecutable("com.example.Main", mod, mf);
+   *
+   * FatJarStep fat = b.addFatJar("myapp", exe);
+   * b.getInstallStep().dependOn(fat);
+   * }</pre>
+   *
+   * @param jarName the base name of the output JAR (without {@code .jar} extension)
+   * @param exe the compilation step whose output is packaged together with its dependencies
+   * @return a new {@link FatJarStep} that automatically depends on {@code exe}
+   */
+  public FatJarStep addFatJar(String jarName, Executable exe) {
+    return new FatJarStep(jarName, exe);
   }
 
   /**
@@ -209,8 +244,7 @@ public class Build {
   // -------------------------------------------------------------------------
 
   /**
-   * Returns the default {@code install} step. Wire compilation or copy steps here to make them run
-   * by default.
+   * Returns the default {@code install} step.
    *
    * @return the install step
    */
@@ -247,8 +281,7 @@ public class Build {
   }
 
   /**
-   * Prints all registered top-level steps to standard output. Useful for implementing {@code
-   * --help} or listing available steps.
+   * Prints all registered top-level steps to standard output.
    */
   public void printAvailableSteps() {
     System.out.println("[buildente] Available steps:");

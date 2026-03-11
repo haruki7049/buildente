@@ -1,27 +1,22 @@
 import dev.haruki7049.buildente.Build;
 import dev.haruki7049.buildente.BuildScript;
 import dev.haruki7049.buildente.Executable;
-import dev.haruki7049.buildente.JarStep;
+import dev.haruki7049.buildente.FatJarStep;
 import dev.haruki7049.buildente.ManifestConfig;
 import dev.haruki7049.buildente.Module;
 import dev.haruki7049.buildente.RunStep;
 
 /**
- * Sample Buildente build script demonstrating JAR creation with a manifest attached to the
- * executable.
+ * Sample Buildente build script demonstrating fat-JAR creation with external Maven dependencies.
  *
- * <p>This file is the user-facing equivalent of a {@code build.zig} in the Zig build system. It is
- * NOT compiled by Gradle ahead of time — instead, the Buildente engine ({@code ScriptRunner})
- * compiles and loads it dynamically at runtime.
+ * <p>Dependencies are declared in {@code deps.properties}. Run {@code bdt update} once after
+ * adding or changing entries to compute and record {@code sha256} hashes.
  *
  * <p>Available steps:
  *
  * <ul>
- *   <li>{@code install} (default) — compile and package a JAR; manifest is inherited from the
- *       executable declaration
- *   <li>{@code jar-override} — same executable, but a different manifest is passed explicitly to
- *       {@code addJar}, overriding the one attached to the executable
- *   <li>{@code run} — compile and execute the program directly (no JAR involved)
+ *   <li>{@code install} (default) — produce a self-contained fat JAR
+ *   <li>{@code run} — compile and execute the program directly
  * </ul>
  */
 public class Buildente implements BuildScript {
@@ -31,9 +26,11 @@ public class Buildente implements BuildScript {
     // 1. Create a Module pointing at the source directory.
     Module mod = b.createModule("src");
 
-    // 2. Declare the manifest once, directly on the executable.
-    //    Any JarStep that packages this executable will inherit it automatically
-    //    — no need to pass the manifest again to addJar().
+    // 2. Declare which deps.properties aliases this module needs.
+    //    Their JARs will be merged into the fat JAR automatically.
+    mod.addDependency("buildente");
+
+    // 3. Attach a manifest so the fat JAR is directly executable with java -jar.
     ManifestConfig manifest =
         new ManifestConfig()
             .setMainClass("com.example.Main")
@@ -43,23 +40,14 @@ public class Buildente implements BuildScript {
 
     Executable exe = b.addExecutable("com.example.Main", mod, manifest);
 
-    // 3. JarStep inherits the manifest from exe — no manifest arg required here.
-    JarStep jar = b.addJar("hello", exe);
-
-    // 4. Explicit manifest passed to addJar() takes precedence over the one on exe.
-    ManifestConfig overrideManifest =
-        new ManifestConfig()
-            .setMainClass("com.example.Main")
-            .addAttribute("Implementation-Version", "1.0.0-debug");
-
-    JarStep jarOverride = b.addJar("hello-debug", exe, overrideManifest);
+    // 4. Package as a fat JAR — compiled classes + dependency JARs merged into one archive.
+    FatJarStep fat = b.addFatJar("hello", exe);
 
     // 5. RunStep for direct execution (no JAR involved).
     RunStep run = b.addRunArtifact(exe);
 
-    // 6. Wire steps to top-level targets.
-    b.getInstallStep().dependOn(jar);
-    b.step("jar-override", "Package JAR with an override manifest").dependOn(jarOverride);
+    // 6. Wire to top-level steps.
+    b.getInstallStep().dependOn(fat);
     b.step("run", "Compile and run the Hello example").dependOn(run);
   }
 }

@@ -3,9 +3,11 @@ package dev.haruki7049.buildente;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Locates, compiles, and executes a user-written {@code Buildente.java} script.
@@ -15,6 +17,10 @@ import java.util.List;
  * <ol>
  *   <li><strong>Locate</strong> – looks for {@code Buildente.java} in the directory supplied to
  *       {@link #run(Path, Build, String)}.
+ *   <li><strong>Resolve dependencies</strong> – if {@code deps.properties} is present, all entries
+ *       must already have a {@code sha256} value (written by {@code bdt update}). JARs are fetched
+ *       from the content-addressed cache (downloading from Maven if cold) and injected into the
+ *       {@link Build} instance via {@link Build#setResolvedJars(Map)}.
  *   <li><strong>Compile</strong> – invokes the external {@code javac} command via {@link
  *       ProcessBuilder}, forwarding the current JVM classpath so the script can import {@code
  *       dev.haruki7049.buildente.*}.
@@ -24,12 +30,19 @@ import java.util.List;
  *       BuildScript#build(Build)}, then runs the requested step.
  * </ol>
  *
+ * <h2>Dependency resolution</h2>
+ *
+ * <p>All dependency metadata — JAR ID, repository URL, and SHA-256 hash — lives in the single file
+ * {@code deps.properties}. There is no separate lock file. Run {@code bdt update} once after adding
+ * or changing entries to compute and record the {@code sha256} values.
+ *
  * <h2>Limitations (POC)</h2>
  *
  * <ul>
  *   <li>The script class must be named exactly {@code Buildente}.
  *   <li>Only a single source file is supported in this proof-of-concept.
  *   <li>{@code javac} must be available on {@code PATH} at runtime.
+ *   <li>Transitive Maven dependencies are not resolved automatically; declare all JARs explicitly.
  * </ul>
  */
 public final class ScriptRunner {
@@ -49,8 +62,8 @@ public final class ScriptRunner {
   /**
    * Runs a {@code Buildente.java} script located in {@code scriptDir}.
    *
-   * <p>This method encapsulates the full lifecycle: locate → compile → load → build-graph
-   * definition → step execution.
+   * <p>This method encapsulates the full lifecycle: locate → resolve deps → compile → load →
+   * build-graph definition → step execution.
    *
    * @param scriptDir directory that contains {@code Buildente.java}; also used as the project root
    *     for placing the {@code .buildente/} output directory
@@ -68,24 +81,73 @@ public final class ScriptRunner {
     }
     System.out.println("[buildente] Found script: " + scriptFile.toAbsolutePath());
 
-    // ------------------------------------------------------------------ 2. Compile
+    // ------------------------------------------------------------------ 2. Resolve dependencies
+    resolveDependencies(scriptDir, b);
+
+    // ------------------------------------------------------------------ 3. Compile
     Path outputDir = compile(scriptFile, scriptDir);
 
-    // ------------------------------------------------------------------ 3. Load
+    // ------------------------------------------------------------------ 4. Load
     BuildScript script = load(outputDir);
 
-    // ------------------------------------------------------------------ 4. Define graph
+    // ------------------------------------------------------------------ 5. Define graph
     System.out.println("[buildente] Configuring build graph...");
     script.build(b);
 
-    // ------------------------------------------------------------------ 5. Execute
+    // ------------------------------------------------------------------ 6. Execute
     System.out.println("[buildente] Build started. Step: " + stepName);
     b.executeStep(stepName);
     System.out.println("[buildente] Build finished.");
   }
 
   // ------------------------------------------------------------------
-  // Phase 2: compile Buildente.java using the external javac command
+  // Phase 2: dependency resolution
+  // ------------------------------------------------------------------
+
+  /**
+   * Checks for {@code deps.properties}. When present, every entry must have a non-null {@code
+   * sha256} (written by {@code bdt update}); if any are missing the build is aborted. Verified JARs
+   * are injected into {@code b} via {@link Build#setResolvedJars(Map)}.
+   *
+   * @param projectRoot the project root directory
+   * @param b the {@link Build} instance to inject resolved jars into
+   * @throws BuildScriptException if {@code deps.properties} is malformed, any entry lacks a {@code
+   *     sha256}, or any JAR cannot be fetched or verified
+   */
+  private static void resolveDependencies(Path projectRoot, Build b) {
+    Path depsPath = projectRoot.resolve(DepsProperties.FILE_NAME);
+
+    if (!Files.exists(depsPath)) {
+      return; // No dependencies declared — nothing to do
+    }
+
+    DepsProperties deps;
+    try {
+      deps = DepsProperties.read(depsPath);
+    } catch (Exception e) {
+      throw new BuildScriptException(
+          "Failed to read " + DepsProperties.FILE_NAME + ": " + e.getMessage(), e);
+    }
+
+    if (deps.getAliases().isEmpty()) {
+      return;
+    }
+
+    System.out.println(
+        "[buildente] Fetching " + deps.getAliases().size() + " package(s) from deps.properties...");
+
+    try {
+      Map<String, Path> resolvedJars = DependencyFetcher.fetchAll(deps);
+      b.setResolvedJars(resolvedJars);
+    } catch (DependencyFetcher.DependencyFetchException e) {
+      throw new BuildScriptException("Dependency resolution failed: " + e.getMessage(), e);
+    }
+
+    System.out.println("[buildente] All dependencies resolved.");
+  }
+
+  // ------------------------------------------------------------------
+  // Phase 3: compile Buildente.java using the external javac command
   // ------------------------------------------------------------------
 
   /**
@@ -153,7 +215,7 @@ public final class ScriptRunner {
   }
 
   // ------------------------------------------------------------------
-  // Phase 3: load the compiled class via URLClassLoader
+  // Phase 4: load the compiled class via URLClassLoader
   // ------------------------------------------------------------------
 
   /**

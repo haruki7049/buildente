@@ -1,8 +1,10 @@
 package dev.haruki7049.buildente;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A build step that compiles a Java {@link Module} into bytecode using {@code javac}.
@@ -12,24 +14,12 @@ import java.util.List;
  *
  * <p>At execution time this step calls {@link Module#resolveSourceFiles()} to discover all {@code
  * .java} files under the module's source directory recursively, then passes them all to a single
- * {@code javac} invocation. Compiling the entire source tree in one pass is necessary because Java
- * {@code import} statements reference packages (directories), not individual files — the compiler
- * must see all classes in a package simultaneously to resolve cross-file references.
+ * {@code javac} invocation.
  *
  * <p>Compiled {@code .class} files are placed under {@value #OUTPUT_DIR}.
  *
- * <p>An optional {@link ManifestConfig} can be attached at construction time. When present, it is
- * automatically picked up by {@link JarStep} so callers do not need to pass the manifest a second
- * time to {@link Build#addJar(String, Executable)}:
- *
- * <pre>{@code
- * ManifestConfig mf = new ManifestConfig().setMainClass("com.example.Main");
- * Executable exe = b.addExecutable("com.example.Main", mod, mf);
- *
- * // JarStep inherits the manifest from exe automatically
- * JarStep jar = b.addJar("myapp", exe);
- * b.getInstallStep().dependOn(jar);
- * }</pre>
+ * <p>If the module declares dependencies via {@link Module#addDependency(String)}, their resolved
+ * JAR paths (from {@code deps.properties}) are forwarded to {@code javac} via {@code -classpath}.
  */
 public class Executable extends Step {
 
@@ -60,7 +50,7 @@ public class Executable extends Step {
   /**
    * Creates an executable step backed by a {@link Module}, with no manifest attached.
    *
-   * @param name the fully-qualified class name of the entry point (e.g. {@code "com.example.App"})
+   * @param name the fully-qualified class name of the entry point
    * @param module the module describing the source directory to compile
    */
   public Executable(String name, Module module) {
@@ -70,13 +60,9 @@ public class Executable extends Step {
   /**
    * Creates an executable step backed by a {@link Module} with an attached {@link ManifestConfig}.
    *
-   * <p>The manifest is not used during compilation; it is carried on this object so that a
-   * subsequent {@link JarStep} can inherit it without requiring the caller to pass it again.
-   *
-   * @param name the fully-qualified class name of the entry point (e.g. {@code "com.example.App"})
+   * @param name the fully-qualified class name of the entry point
    * @param module the module describing the source directory to compile
    * @param manifestConfig the manifest configuration to embed when packaging a JAR, or {@code null}
-   *     for no custom manifest
    */
   public Executable(String name, Module module, ManifestConfig manifestConfig) {
     super("compile:" + name);
@@ -90,8 +76,7 @@ public class Executable extends Step {
   // -------------------------------------------------------------------------
 
   /**
-   * Returns the logical name (entry-point class name) of this executable. Used by {@link RunStep}
-   * to construct the {@code java} command.
+   * Returns the logical name (entry-point class name) of this executable.
    *
    * @return the fully-qualified class name, e.g. {@code "com.example.App"}
    */
@@ -111,9 +96,6 @@ public class Executable extends Step {
   /**
    * Returns the {@link ManifestConfig} attached to this executable, if any.
    *
-   * <p>{@link JarStep} calls this method when no manifest was provided explicitly, allowing the
-   * manifest to be declared once on the executable and inherited by all JAR steps that package it.
-   *
    * @return the manifest config, or {@code null} if none was supplied
    */
   public ManifestConfig getManifestConfig() {
@@ -128,14 +110,11 @@ public class Executable extends Step {
    * Invokes {@code javac} via {@link ProcessBuilder} to compile all {@code .java} files found under
    * the module's source directory. Output is placed in {@value #OUTPUT_DIR}.
    *
-   * <p>The compilation command is assembled as:
+   * <p>Command structure:
    *
    * <pre>
-   *   javac [extraArgs...] -d OUTPUT_DIR file1.java file2.java ...
+   *   javac [extraArgs...] [-classpath dep1.jar:dep2.jar] -d OUTPUT_DIR file1.java ...
    * </pre>
-   *
-   * <p>All source files are passed in a single {@code javac} invocation so that cross-package
-   * references within the same module are resolved correctly.
    *
    * @throws RuntimeException if source discovery, compilation, or process handling fails
    */
@@ -144,10 +123,8 @@ public class Executable extends Step {
     String sourceDir = module.getSourceDir();
     System.out.println("[buildente] Compiling sources under " + sourceDir + " ...");
 
-    // Ensure the output directory exists before invoking javac
     new File(OUTPUT_DIR).mkdirs();
 
-    // Discover all .java files under the source directory at step-execution time
     List<String> sourceFiles = module.resolveSourceFiles();
     System.out.println("[buildente] Found " + sourceFiles.size() + " source file(s)");
 
@@ -182,14 +159,12 @@ public class Executable extends Step {
   // -------------------------------------------------------------------------
 
   /**
-   * Assembles the full {@code javac} command from the module's configuration and the list of
-   * discovered source files.
-   *
-   * <p>Command structure:
+   * Assembles the full {@code javac} command.
    *
    * <ol>
    *   <li>{@code javac}
-   *   <li>Any extra args from {@link Module#getExtraArgs()}
+   *   <li>Extra args from {@link Module#getExtraArgs()}
+   *   <li>{@code -classpath dep1.jar:dep2.jar} (only if dependencies are declared)
    *   <li>{@code -d OUTPUT_DIR}
    *   <li>All discovered {@code .java} file paths
    * </ol>
@@ -201,14 +176,18 @@ public class Executable extends Step {
     List<String> command = new ArrayList<>();
     command.add("javac");
 
-    // Extra compiler flags (e.g. -source 17, -encoding UTF-8)
     command.addAll(module.getExtraArgs());
 
-    // Output directory
+    List<Path> depJars = module.getResolvedJars();
+    if (!depJars.isEmpty()) {
+      command.add("-classpath");
+      command.add(
+          depJars.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator)));
+    }
+
     command.add("-d");
     command.add(OUTPUT_DIR);
 
-    // All source files from the directory tree
     command.addAll(sourceFiles);
 
     return command;

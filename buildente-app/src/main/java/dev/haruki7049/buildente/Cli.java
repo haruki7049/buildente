@@ -12,11 +12,20 @@ import picocli.CommandLine;
  *
  * <p>Parses command-line arguments via picocli and delegates execution to {@link ScriptRunner},
  * which locates, compiles, and runs the user's {@code Buildente.java} build script.
+ *
+ * <h2>Subcommands</h2>
+ *
+ * <ul>
+ *   <li>(default) — compile and run a build step, e.g. {@code bdt install}, {@code bdt run}.
+ *   <li>{@code update} — compute and write missing {@code sha256} entries in {@code
+ *       deps.properties}.
+ * </ul>
  */
 @CommandLine.Command(
     name = "bdt",
     version = "0.1.0",
     mixinStandardHelpOptions = true,
+    subcommands = {UpdateCommand.class},
     description = "Buildente — a Java build system inspired by Zig's build system")
 public class Cli implements Callable<Integer> {
 

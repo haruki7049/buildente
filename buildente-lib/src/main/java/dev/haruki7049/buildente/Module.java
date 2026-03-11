@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -16,29 +17,21 @@ import java.util.stream.Stream;
  *
  * <ul>
  *   <li>A <strong>source directory</strong> whose {@code .java} files are discovered recursively
- *       and compiled together. This reflects how Java itself works: {@code import} statements
- *       reference packages (directories), not individual files, so the natural unit of compilation
- *       is a source root rather than a single file.
+ *       and compiled together.
  *   <li>Extra {@code javac} options (e.g. {@code -source 17}, annotation-processor flags).
+ *   <li><strong>Dependencies</strong> declared by alias (e.g. {@code "guava"}), resolved at build
+ *       time from {@code deps.properties} to local JAR paths and forwarded to {@code javac} via
+ *       {@code -classpath}.
  * </ul>
  *
- * <p>Modules are created via {@link Build#createModule(String)} and then passed to {@link
- * Build#addExecutable(String, Module)} or a future {@code addLibrary} call. This separates the
- * <em>description of what to compile</em> from the <em>step that performs compilation</em>.
+ * <p>Modules are created via {@link Build#createModule(String)}.
  *
- * <p>Example — single source directory:
+ * <p>Example — declaring dependencies:
  *
  * <pre>{@code
  * Module mod = b.createModule("src");
- * Executable exe = b.addExecutable("com.example.App", mod);
- * RunStep   run = b.addRunArtifact(exe);
- * }</pre>
- *
- * <p>Example — with extra compiler flags:
- *
- * <pre>{@code
- * Module mod = b.createModule("src");
- * mod.addExtraArg("-source").addExtraArg("17");
+ * mod.addDependency("guava");      // alias from deps.properties
+ * mod.addDependency("slf4j-api");
  * Executable exe = b.addExecutable("com.example.App", mod);
  * }</pre>
  */
@@ -46,37 +39,95 @@ public final class Module {
 
   /**
    * Path to the source directory whose {@code .java} files are compiled recursively (e.g. {@code
-   * "src"} or {@code "src/main/java"}). Relative to the working directory in which the build is
-   * executed.
+   * "src"} or {@code "src/main/java"}). Relative to the working directory.
    */
   private final String sourceDir;
 
-  /**
-   * Extra command-line options forwarded verbatim to {@code javac} (e.g. {@code "-source"}, {@code
-   * "17"}). May be empty; never null.
-   */
+  /** Extra command-line options forwarded verbatim to {@code javac}. May be empty; never null. */
   private final List<String> extraArgs = new ArrayList<>();
 
+  /**
+   * Dependency aliases declared via {@link #addDependency(String)}, resolved to local JAR paths at
+   * build time via {@link #resolvedJarMap}.
+   */
+  private final List<String> dependencyNames = new ArrayList<>();
+
+  /**
+   * Map from alias to cached JAR path, injected by {@link Build} from the results of {@link
+   * DependencyFetcher#fetchAll(DepsProperties)}. Empty when there is no {@code deps.properties}.
+   */
+  private final Map<String, Path> resolvedJarMap;
+
   // -------------------------------------------------------------------------
-  // Constructor (package-private — use Build#createModule to obtain instances)
+  // Constructors (package-private — use Build#createModule to obtain instances)
   // -------------------------------------------------------------------------
 
   /**
-   * Creates a module rooted at {@code sourceDir}.
+   * Creates a module rooted at {@code sourceDir} with no pre-resolved jars.
    *
-   * <p>Package-private: callers should use {@link Build#createModule(String)} rather than
-   * constructing this directly, keeping the API consistent with {@code std.Build.createModule} in
-   * Zig.
-   *
-   * @param sourceDir path to the source directory containing {@code .java} files, relative to the
-   *     working directory
-   * @throws IllegalArgumentException if {@code sourceDir} is null or blank
+   * @param sourceDir path to the source directory containing {@code .java} files
    */
   Module(String sourceDir) {
+    this(sourceDir, Collections.emptyMap());
+  }
+
+  /**
+   * Creates a module rooted at {@code sourceDir} with a pre-populated jar map supplied by {@link
+   * Build}.
+   *
+   * @param sourceDir path to the source directory containing {@code .java} files
+   * @param resolvedJarMap live map from alias → cached JAR {@link Path}
+   */
+  Module(String sourceDir, Map<String, Path> resolvedJarMap) {
     if (sourceDir == null || sourceDir.isBlank()) {
       throw new IllegalArgumentException("sourceDir must not be null or blank");
     }
     this.sourceDir = sourceDir;
+    this.resolvedJarMap = resolvedJarMap;
+  }
+
+  // -------------------------------------------------------------------------
+  // Dependency declaration
+  // -------------------------------------------------------------------------
+
+  /**
+   * Declares that this module requires the dependency identified by {@code alias}.
+   *
+   * <p>{@code alias} must match a key in {@code deps.properties}. At compilation time the
+   * corresponding JAR is added to the {@code javac -classpath}. At runtime the same JAR is included
+   * in the {@code java -cp} list.
+   *
+   * @param alias the dependency alias as declared in {@code deps.properties}
+   * @return {@code this}, for method chaining
+   */
+  public Module addDependency(String alias) {
+    if (alias != null && !alias.isBlank()) {
+      dependencyNames.add(alias);
+    }
+    return this;
+  }
+
+  /**
+   * Returns the resolved local JAR paths for all dependencies declared via {@link
+   * #addDependency(String)}.
+   *
+   * @return list of absolute paths to cached dependency JARs, in declaration order
+   * @throws IllegalStateException if any declared alias is absent from the resolved jar map
+   */
+  public List<Path> getResolvedJars() {
+    List<Path> jars = new ArrayList<>();
+    for (String alias : dependencyNames) {
+      Path jar = resolvedJarMap.get(alias);
+      if (jar == null) {
+        throw new IllegalStateException(
+            "[buildente] Dependency '"
+                + alias
+                + "' is not in deps.properties or has no sha256.\n"
+                + "  Run 'bdt update' to populate it.");
+      }
+      jars.add(jar);
+    }
+    return Collections.unmodifiableList(jars);
   }
 
   // -------------------------------------------------------------------------
@@ -96,11 +147,7 @@ public final class Module {
    * Discovers all {@code .java} files under {@link #sourceDir} recursively and returns their paths
    * as strings.
    *
-   * <p>This is called by {@link Executable} at step-execution time rather than at module-creation
-   * time, so that files added to the directory after the module is declared are still picked up.
-   *
-   * @return an unmodifiable list of absolute or relative {@code .java} file paths; empty if none
-   *     are found
+   * @return an unmodifiable list of {@code .java} file paths; empty if none are found
    * @throws RuntimeException if the directory cannot be walked
    */
   public List<String> resolveSourceFiles() {
@@ -115,7 +162,7 @@ public final class Module {
     try (Stream<Path> walk = Files.walk(root)) {
       walk.filter(p -> p.toString().endsWith(".java"))
           .map(Path::toString)
-          .sorted() // deterministic order
+          .sorted()
           .forEach(javaFiles::add);
     } catch (Exception e) {
       throw new RuntimeException(
@@ -131,8 +178,7 @@ public final class Module {
   }
 
   /**
-   * Returns an unmodifiable view of the extra {@code javac} arguments registered via {@link
-   * #addExtraArg(String)}.
+   * Returns an unmodifiable view of the extra {@code javac} arguments.
    *
    * @return extra compiler arguments, possibly empty
    */
@@ -145,7 +191,7 @@ public final class Module {
   // -------------------------------------------------------------------------
 
   /**
-   * Appends a single extra argument forwarded verbatim to {@code javac}. Call once per token, e.g.:
+   * Appends a single extra argument forwarded verbatim to {@code javac}. Call once per token:
    *
    * <pre>{@code
    * mod.addExtraArg("-source").addExtraArg("17");
@@ -161,15 +207,6 @@ public final class Module {
     return this;
   }
 
-  // -------------------------------------------------------------------------
-  // Object overrides
-  // -------------------------------------------------------------------------
-
-  /**
-   * Returns a human-readable summary of this module.
-   *
-   * @return string in the form {@code Module{sourceDir=<path>}}
-   */
   @Override
   public String toString() {
     return "Module{sourceDir=" + sourceDir + "}";

@@ -1,5 +1,7 @@
 package dev.haruki7049.buildente;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,10 @@ import java.util.List;
  *
  * <p>This step automatically depends on the given {@link Executable}, so the source will always be
  * compiled before it is run.
+ *
+ * <p>If the executable's module declares dependencies via {@link Module#addDependency(String)},
+ * their JAR paths (resolved from {@code deps.properties}) are appended to the {@code java -cp}
+ * argument so that the program can load them at runtime.
  */
 public class RunStep extends Step {
 
@@ -29,7 +35,6 @@ public class RunStep extends Step {
   public RunStep(Executable executable) {
     super("run:" + executable.getExecutableName());
     this.executable = executable;
-    // Compilation must always precede execution
     this.dependOn(executable);
   }
 
@@ -43,8 +48,14 @@ public class RunStep extends Step {
   }
 
   /**
-   * Invokes {@code java} via {@link ProcessBuilder} to run the compiled class. The classpath is set
-   * to {@link Executable#OUTPUT_DIR}.
+   * Invokes {@code java} via {@link ProcessBuilder} to run the compiled class.
+   *
+   * <p>The classpath is composed of:
+   *
+   * <ol>
+   *   <li>{@link Executable#OUTPUT_DIR} — the compiled class files.
+   *   <li>Any dependency JARs declared on the module via {@link Module#addDependency(String)}.
+   * </ol>
    *
    * @throws RuntimeException if execution fails or the process is interrupted
    */
@@ -57,7 +68,7 @@ public class RunStep extends Step {
       List<String> command = new ArrayList<>();
       command.add("java");
       command.add("-cp");
-      command.add(Executable.OUTPUT_DIR);
+      command.add(buildClasspath());
       command.add(className);
       command.addAll(runArgs);
 
@@ -80,5 +91,26 @@ public class RunStep extends Step {
     } catch (Exception e) {
       throw new RuntimeException("[buildente] Failed to run: " + className, e);
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Private helpers
+  // -------------------------------------------------------------------------
+
+  /**
+   * Builds the {@code -cp} value: {@link Executable#OUTPUT_DIR} followed by any resolved dependency
+   * JARs, joined with the platform path separator.
+   *
+   * @return the classpath string
+   */
+  private String buildClasspath() {
+    List<String> entries = new ArrayList<>();
+    entries.add(Executable.OUTPUT_DIR);
+
+    for (Path jar : executable.getModule().getResolvedJars()) {
+      entries.add(jar.toString());
+    }
+
+    return String.join(File.pathSeparator, entries);
   }
 }
