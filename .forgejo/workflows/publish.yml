@@ -1,0 +1,32 @@
+# .forgejo/workflows/publish.yml
+name: Publish to Codeberg Maven
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "zulu"
+          java-package: jdk
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Publish to Codeberg Maven
+        run: ./gradlew publish
+        env:
+          CODEBERG_USERNAME: haruki7049
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}

@@ -7,13 +7,17 @@
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
-    application
+    id("application")
+    id("maven-publish")
     alias(libs.plugins.shadow)
 }
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+
+    // The upload destination
+    maven { url = uri("https://codeberg.org/api/packages/haruki7049/maven") }
 }
 
 dependencies {
@@ -23,6 +27,9 @@ dependencies {
 
 // Apply a specific Java toolchain to ease working on different environments.
 java {
+    withJavadocJar()
+    withSourcesJar()
+
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
@@ -31,4 +38,28 @@ java {
 application {
     // Define the main class for the application.
     mainClass = "dev.haruki7049.buildente.Main"
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "Codeberg"
+            url = uri("https://codeberg.org/api/packages/haruki7049/maven")
+
+            credentials {
+                username = System.getenv("CODEBERG_USERNAME") ?: ""
+                password = System.getenv("CODEBERG_TOKEN") ?: ""
+            }
+        }
+    }
+
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "dev.haruki7049.buildente"
+            artifactId = "buildente-app"
+            version = "0.0.0"
+
+            from(components["shadow"])
+        }
+    }
 }
