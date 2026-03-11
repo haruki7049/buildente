@@ -21,12 +21,13 @@ jobs:
           java-version: "25"
           distribution: "zulu"
           java-package: jdk
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Publish to Codeberg Maven
-        run: ./gradlew publish
+        run: ./gradlew publish --no-daemon
         env:
           CODEBERG_USERNAME: haruki7049
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
