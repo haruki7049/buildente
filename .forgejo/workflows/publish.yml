@@ -37,9 +37,9 @@ jobs:
 
       - name: Publish to Codeberg Maven
         run: |
-          echo $PROJECT_VERSION
+          echo $BUILDENTE_VERSION
           ./gradlew publish --no-daemon
         env:
           CODEBERG_USERNAME: haruki7049
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
-          PROJECT_VERSION: ${{ steps.version.outputs.value }}
+          BUILDENTE_VERSION: ${{ steps.version.outputs.value }}
