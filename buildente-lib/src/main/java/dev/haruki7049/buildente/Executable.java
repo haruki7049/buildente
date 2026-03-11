@@ -21,7 +21,7 @@ import java.util.List;
 public class Executable extends Step {
 
   /** Directory where all compiled class files are placed. */
-  public static final String OUTPUT_DIR = "build/classes/java";
+  public static final String OUTPUT_DIR = "build/classes";
 
   /**
    * The fully-qualified class name used as the entry point when the artifact is executed (e.g.
