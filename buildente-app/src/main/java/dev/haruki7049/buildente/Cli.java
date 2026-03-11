@@ -56,8 +56,4 @@ public class Cli implements Callable<Integer> {
 
     return 0;
   }
-
-  private enum SubCommand {
-    run,
-  }
 }
