@@ -36,6 +36,10 @@ java {
     }
 }
 
+tasks.withType<JavaCompile> {
+    options.release = 17
+}
+
 application {
     // Define the main class for the application.
     mainClass = "dev.haruki7049.buildente.Main"

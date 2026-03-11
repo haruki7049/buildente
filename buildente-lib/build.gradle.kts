@@ -22,6 +22,10 @@ java {
     }
 }
 
+tasks.withType<JavaCompile> {
+    options.release = 17
+}
+
 publishing {
     repositories {
         maven {
