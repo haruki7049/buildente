@@ -19,7 +19,7 @@ jobs:
           java-version: "25"
           distribution: "zulu"
           java-package: jdk
-          cache: gradleut@v5
+          cache: gradle
 
       - run: |
           # Use your favorite static site generator here!
