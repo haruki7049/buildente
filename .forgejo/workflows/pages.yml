@@ -1,0 +1,40 @@
+name: Codeberg Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  pages:
+    runs-on: codeberg-small
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "zulu"
+          java-package: jdk
+          cache: gradleut@v5
+
+      - run: |
+          # Use your favorite static site generator here!
+          mkdir _site
+          cp *.html _site/
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Generate javadoc
+        run: |
+          ./gradlew :buildente-lib:javadoc --no-daemon
+
+      - uses: actions/git-pages@v2
+        with:
+          site: https://haruki7049.codeberg.pages/buildente/
+          token: ${{ forge.token }}
+          source: buildente-lib/build/docs/javadoc/
