@@ -21,11 +21,6 @@ jobs:
           java-package: jdk
           cache: gradle
 
-      - run: |
-          # Use your favorite static site generator here!
-          mkdir _site
-          cp *.html _site/
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
