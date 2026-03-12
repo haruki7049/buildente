@@ -61,6 +61,24 @@ publishing {
                     connection = "scm:git:https://codeberg.org/haruki7049/buildente.git"
                     developerConnection = "scm:git:ssh://codeberg.org/haruki7049/buildente.git"
                 }
+
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                    license {
+                        name = "MIT License"
+                        url = "https://opensource.org/license/mit"
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = "haruki7049"
+                        email = "tontonkirikiri@gmail.com"
+                    }
+                }
             }
         }
     }
