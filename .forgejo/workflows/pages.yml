@@ -28,7 +28,7 @@ jobs:
         run: |
           ./gradlew :buildente-lib:javadoc --no-daemon
 
-      - uses: actions/git-pages@v2
+      - uses: https://codeberg.org/actions/git-pages@v2.1.0
         with:
           site: https://haruki7049.codeberg.pages/buildente/
           token: ${{ forge.token }}
