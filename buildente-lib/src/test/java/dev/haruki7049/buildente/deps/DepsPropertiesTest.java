@@ -92,7 +92,7 @@ class DepsPropertiesTest {
 
   /** Reading a non-existent file must throw {@link IOException}. */
   @Test
-  void read_missingFile_throwsIOException() {
+  void read_missingFile_throwsIoException() {
     Path missing = tempDir.resolve("does-not-exist.properties");
     assertThrows(IOException.class, () -> DepsProperties.read(missing));
   }
