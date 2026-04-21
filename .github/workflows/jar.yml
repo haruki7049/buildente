@@ -1,0 +1,52 @@
+name: Publish to GitHub Packages (Maven)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "zulu"
+          java-package: jdk
+          cache: gradle
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          # Use tag name if triggered by a tag, otherwise use commit hash
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Publish to GitHub Packages
+        run: |
+          echo "$BUILDENTE_VERSION"
+          ./gradlew publish --no-daemon
+        env:
+          BUILDENTE_VERSION: ${{ steps.version.outputs.value }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

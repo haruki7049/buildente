@@ -16,9 +16,6 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
-
-    // The upload destination
-    maven { url = uri("https://codeberg.org/api/packages/haruki7049/maven") }
 }
 
 dependencies {
@@ -45,12 +42,12 @@ application {
 publishing {
     repositories {
         maven {
-            name = "Codeberg"
-            url = uri("https://codeberg.org/api/packages/haruki7049/maven")
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/haruki7049/buildente")
 
             credentials {
-                username = System.getenv("CODEBERG_USERNAME") ?: ""
-                password = System.getenv("CODEBERG_TOKEN") ?: ""
+                username = System.getenv("GITHUB_ACTOR") ?: ""
+                password = System.getenv("GITHUB_TOKEN") ?: ""
             }
         }
     }
@@ -64,11 +61,11 @@ publishing {
             from(components["shadow"])
 
             pom {
-                url = "https://codeberg.org/haruki7049/buildente"
+                url = "https://github.com/haruki7049/buildente"
                 scm {
-                    url = "https://codeberg.org/haruki7049/buildente"
-                    connection = "scm:git:https://codeberg.org/haruki7049/buildente.git"
-                    developerConnection = "scm:git:ssh://codeberg.org/haruki7049/buildente.git"
+                    url = "https://github.com/haruki7049/buildente"
+                    connection = "scm:git:https://github.com/haruki7049/buildente.git"
+                    developerConnection = "scm:git:ssh://github.com/haruki7049/buildente.git"
                 }
 
                 licenses {
