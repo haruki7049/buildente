@@ -26,7 +26,12 @@
       ];
 
       perSystem =
-        { pkgs, lib, ... }:
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         {
           treefmt = {
             projectRootFile = ".git/config";
@@ -61,6 +66,8 @@
               pkgs.nil # Nix
               # pkgs.jdt-language-server # Java
             ];
+
+            inputsFrom = [ config.treefmt.build.devShell ];
           };
         };
     };
