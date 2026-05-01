@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A build step that packages compiled class files into a JAR archive.
@@ -48,6 +49,8 @@ import java.util.List;
  * which must be available on {@code PATH} at build time (it ships with every JDK).
  */
 public class JarStep extends Step {
+
+  private static final Logger LOGGER = Logger.getLogger(JarStep.class.getName());
 
   /** Directory where all produced JAR files are placed. */
   public static final String OUTPUT_DIR = "build/libs";
@@ -185,7 +188,7 @@ public class JarStep extends Step {
    */
   @Override
   protected void execute() {
-    System.out.println("[buildente] Packaging JAR: " + getOutputJarPath() + " ...");
+    LOGGER.info("[buildente] Packaging JAR: " + getOutputJarPath() + " ...");
 
     // Ensure the output directory exists
     new File(OUTPUT_DIR).mkdirs();
@@ -202,7 +205,7 @@ public class JarStep extends Step {
       if (effectiveConfig != null) {
         tempManifest = writeTempManifest(effectiveConfig);
         effectiveManifestPath = tempManifest.toAbsolutePath().toString();
-        System.out.println("[buildente] Using programmatic manifest: " + effectiveConfig);
+        LOGGER.info("[buildente] Using programmatic manifest: " + effectiveConfig);
       } else if (manifestFilePath != null && !manifestFilePath.isBlank()) {
         File mf = new File(manifestFilePath);
         if (!mf.exists()) {
@@ -210,13 +213,13 @@ public class JarStep extends Step {
               "[buildente] Manifest file not found: " + mf.getAbsolutePath());
         }
         effectiveManifestPath = mf.getAbsolutePath();
-        System.out.println("[buildente] Using manifest file: " + effectiveManifestPath);
+        LOGGER.info("[buildente] Using manifest file: " + effectiveManifestPath);
       }
 
       List<String> command = buildJarCommand(effectiveManifestPath);
       runCommand(command);
 
-      System.out.println("[buildente] JAR created -> " + getOutputJarPath());
+      LOGGER.info("[buildente] JAR created -> " + getOutputJarPath());
 
     } finally {
       // Always clean up the temporary manifest, even on failure

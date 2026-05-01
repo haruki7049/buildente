@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Downloads artifact JARs from Maven repositories, verifies their SHA-256 digests, and stores them
@@ -36,6 +37,8 @@ import java.util.Map;
  * the hash is confirmed, so a partial download cannot corrupt the cache.
  */
 public final class DependencyFetcher {
+
+  private static final Logger LOGGER = Logger.getLogger(DependencyFetcher.class.getName());
 
   /**
    * Subdirectory under the user's home directory used as the cache root. Mirrors how Zig stores its
@@ -72,7 +75,7 @@ public final class DependencyFetcher {
     Map<String, Path> result = new LinkedHashMap<>();
     for (String alias : deps.getAliases()) {
       DepsProperties.Entry entry = deps.getEntry(alias);
-      System.out.println("[buildente] Resolving dependency: " + alias);
+      LOGGER.info("[buildente] Resolving dependency: " + alias);
       Path jar = fetchOne(alias, entry, cacheDir);
       result.put(alias, jar);
     }
@@ -104,12 +107,12 @@ public final class DependencyFetcher {
     Path cachedJar = cacheDir.resolve(entry.getSha256() + ".jar");
 
     if (Files.exists(cachedJar)) {
-      System.out.println("[buildente]   cache hit  -> " + cachedJar.getFileName());
+      LOGGER.info("[buildente]   cache hit  -> " + cachedJar.getFileName());
       return cachedJar;
     }
 
     String url = entry.toJarUrl();
-    System.out.println("[buildente]   downloading " + url);
+    LOGGER.info("[buildente]   downloading " + url);
     Path tempFile = cacheDir.resolve(entry.getSha256() + ".jar.tmp");
 
     try {
@@ -133,7 +136,7 @@ public final class DependencyFetcher {
 
       // Move temp → final cache location atomically
       Files.move(tempFile, cachedJar, StandardCopyOption.ATOMIC_MOVE);
-      System.out.println("[buildente]   cached     -> " + cachedJar.getFileName());
+      LOGGER.info("[buildente]   cached     -> " + cachedJar.getFileName());
       return cachedJar;
 
     } catch (DependencyFetchException e) {

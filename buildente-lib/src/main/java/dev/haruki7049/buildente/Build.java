@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Central configuration object for a Buildente build.
@@ -33,6 +34,8 @@ import java.util.Map;
  * jar map so that {@link Module#addDependency(String)} can look up JAR paths at compile time.
  */
 public class Build {
+
+  private static final Logger LOGGER = Logger.getLogger(Build.class.getName());
 
   /**
    * Registry of all named top-level steps, keyed by step name. Uses LinkedHashMap to preserve
@@ -274,7 +277,7 @@ public class Build {
   public void executeStep(String stepName) {
     Step target = steps.get(stepName);
     if (target == null) {
-      System.err.println("[buildente] Unknown step: '" + stepName + "'");
+      LOGGER.severe("[buildente] Unknown step: '" + stepName + "'");
       printAvailableSteps();
       System.exit(1);
     }
@@ -283,13 +286,13 @@ public class Build {
 
   /** Prints all registered top-level steps to standard output. */
   public void printAvailableSteps() {
-    System.out.println("[buildente] Available steps:");
+    LOGGER.info("[buildente] Available steps:");
     for (Map.Entry<String, Step> entry : steps.entrySet()) {
       String desc = entry.getValue().description;
       if (desc != null && !desc.isEmpty()) {
-        System.out.printf("  %-16s %s%n", entry.getKey(), desc);
+        LOGGER.info(String.format("  %-16s %s", entry.getKey(), desc));
       } else {
-        System.out.println("  " + entry.getKey());
+        LOGGER.info("  " + entry.getKey());
       }
     }
   }

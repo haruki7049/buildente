@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A build step that runs a previously compiled {@link Executable}.
@@ -19,6 +20,8 @@ import java.util.List;
  * argument so that the program can load them at runtime.
  */
 public class RunStep extends Step {
+
+  private static final Logger LOGGER = Logger.getLogger(RunStep.class.getName());
 
   /** The compilation step whose output this step will execute. */
   private final Executable executable;
@@ -62,7 +65,7 @@ public class RunStep extends Step {
   @Override
   protected void execute() {
     String className = executable.getExecutableName();
-    System.out.println("[buildente] Running " + className + " ...");
+    LOGGER.info("[buildente] Running " + className + " ...");
 
     try {
       List<String> command = new ArrayList<>();
