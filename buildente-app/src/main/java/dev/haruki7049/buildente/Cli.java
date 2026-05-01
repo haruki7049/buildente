@@ -27,7 +27,7 @@ import picocli.CommandLine;
     version = "0.1.0",
     mixinStandardHelpOptions = true,
     subcommands = {UpdateCommand.class},
-    description = "Buildente — a Java build system inspired by Zig's build system")
+    description = "Buildente - a Java build system inspired by Zig's build system")
 public class Cli implements Callable<Integer> {
 
   /** Creates a new {@code Cli} instance with default settings. */
