@@ -34,9 +34,11 @@ public class UpdateCommand implements Callable<Integer> {
   public Integer call() {
     Updater.Result result = Updater.run(Paths.get(System.getProperty("user.dir")));
 
-    // Print accumulated log lines from the resolution phase
-    if (!result.getLog().isEmpty()) {
-      LOGGER.info(result.getLog());
+    // Log accumulated lines from the resolution phase
+    for (String line : result.getLog().split("\n")) {
+      if (!line.isEmpty()) {
+        LOGGER.info(line);
+      }
     }
 
     switch (result.getStatus()) {
