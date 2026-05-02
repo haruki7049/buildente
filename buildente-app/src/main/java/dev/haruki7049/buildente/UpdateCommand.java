@@ -44,7 +44,7 @@ public class UpdateCommand implements Callable<Integer> {
     switch (result.getStatus()) {
       case NO_FILE:
         LOGGER.severe(
-            "[buildente] No "
+            "No "
                 + DepsProperties.FILE_NAME
                 + " found in the current directory.\n"
                 + "  Create one with <alias>.id and <alias>.repo entries,"
@@ -53,7 +53,7 @@ public class UpdateCommand implements Callable<Integer> {
 
       case READ_ERROR:
         LOGGER.severe(
-            "[buildente] Failed to read "
+            "Failed to read "
                 + DepsProperties.FILE_NAME
                 + ": "
                 + result.getCause().getMessage());
@@ -61,12 +61,12 @@ public class UpdateCommand implements Callable<Integer> {
 
       case EMPTY:
         LOGGER.info(
-            "[buildente] No entries found in " + DepsProperties.FILE_NAME + ". Nothing to update.");
+            "No entries found in " + DepsProperties.FILE_NAME + ". Nothing to update.");
         return 0;
 
       case FETCH_ERRORS:
         LOGGER.severe(
-            "[buildente] "
+            ""
                 + result.getErrors()
                 + " error(s) occurred. "
                 + DepsProperties.FILE_NAME
@@ -74,25 +74,25 @@ public class UpdateCommand implements Callable<Integer> {
         return 1;
 
       case NOTHING_TO_UPDATE:
-        LOGGER.info("[buildente] All sha256 entries already present. Nothing to write.");
+        LOGGER.info("All sha256 entries already present. Nothing to write.");
         return 0;
 
       case WRITE_ERROR:
         LOGGER.severe(
-            "[buildente] Failed to write "
+            "Failed to write "
                 + DepsProperties.FILE_NAME
                 + ": "
                 + result.getCause().getMessage());
         return 1;
 
       case SUCCESS:
-        LOGGER.info("[buildente] Updated " + DepsProperties.FILE_NAME + ".");
+        LOGGER.info("Updated " + DepsProperties.FILE_NAME + ".");
         LOGGER.info(
-            "[buildente] Commit " + DepsProperties.FILE_NAME + " to version control.");
+            "Commit " + DepsProperties.FILE_NAME + " to version control.");
         return 0;
 
       default:
-        LOGGER.severe("[buildente] Unknown result status: " + result.getStatus());
+        LOGGER.severe("Unknown result status: " + result.getStatus());
         return 1;
     }
   }

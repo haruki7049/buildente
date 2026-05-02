@@ -124,12 +124,12 @@ public class Executable extends Step {
   @Override
   protected void execute() {
     String sourceDir = module.getSourceDir();
-    LOGGER.info("[buildente] Compiling sources under " + sourceDir + " ...");
+    LOGGER.info("Compiling sources under " + sourceDir + " ...");
 
     new File(OUTPUT_DIR).mkdirs();
 
     List<String> sourceFiles = module.resolveSourceFiles();
-    LOGGER.info("[buildente] Found " + sourceFiles.size() + " source file(s)");
+    LOGGER.info("Found " + sourceFiles.size() + " source file(s)");
 
     try {
       List<String> command = buildJavacCommand(sourceFiles);
@@ -142,17 +142,17 @@ public class Executable extends Step {
 
       if (exitCode != 0) {
         throw new RuntimeException(
-            "[buildente] javac exited with code " + exitCode + " for module: " + module);
+            "javac exited with code " + exitCode + " for module: " + module);
       }
 
-      LOGGER.info("[buildente] Compiled -> " + OUTPUT_DIR);
+      LOGGER.info("Compiled -> " + OUTPUT_DIR);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("[buildente] Compilation interrupted for module: " + module, e);
+      throw new RuntimeException("Compilation interrupted for module: " + module, e);
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new RuntimeException("[buildente] Failed to compile module: " + module, e);
+      throw new RuntimeException("Failed to compile module: " + module, e);
     }
   }
 

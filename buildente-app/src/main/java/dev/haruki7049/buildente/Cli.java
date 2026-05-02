@@ -58,10 +58,10 @@ public class Cli implements Callable<Integer> {
     try {
       ScriptRunner.run(scriptDir, b, requestedStep);
     } catch (ScriptRunner.BuildScriptException e) {
-      LOGGER.severe("[buildente] ERROR: " + e.getMessage());
+      LOGGER.severe("ERROR: " + e.getMessage());
 
       if (e.getCause() != null) {
-        LOGGER.severe("[buildente] Caused by: " + e.getCause());
+        LOGGER.severe("Caused by: " + e.getCause());
       }
 
       return 1;

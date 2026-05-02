@@ -277,7 +277,7 @@ public class Build {
   public void executeStep(String stepName) {
     Step target = steps.get(stepName);
     if (target == null) {
-      LOGGER.severe("[buildente] Unknown step: '" + stepName + "'");
+      LOGGER.severe("Unknown step: '" + stepName + "'");
       printAvailableSteps();
       System.exit(1);
     }
@@ -286,7 +286,7 @@ public class Build {
 
   /** Prints all registered top-level steps to standard output. */
   public void printAvailableSteps() {
-    LOGGER.info("[buildente] Available steps:");
+    LOGGER.info("Available steps:");
     for (Map.Entry<String, Step> entry : steps.entrySet()) {
       String desc = entry.getValue().description;
       if (desc != null && !desc.isEmpty()) {

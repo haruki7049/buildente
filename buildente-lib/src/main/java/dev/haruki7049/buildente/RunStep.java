@@ -65,7 +65,7 @@ public class RunStep extends Step {
   @Override
   protected void execute() {
     String className = executable.getExecutableName();
-    LOGGER.info("[buildente] Running " + className + " ...");
+    LOGGER.info("Running " + className + " ...");
 
     try {
       List<String> command = new ArrayList<>();
@@ -83,16 +83,16 @@ public class RunStep extends Step {
 
       if (exitCode != 0) {
         throw new RuntimeException(
-            "[buildente] java exited with code " + exitCode + " for class: " + className);
+            "java exited with code " + exitCode + " for class: " + className);
       }
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("[buildente] Execution interrupted: " + className, e);
+      throw new RuntimeException("Execution interrupted: " + className, e);
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new RuntimeException("[buildente] Failed to run: " + className, e);
+      throw new RuntimeException("Failed to run: " + className, e);
     }
   }
 

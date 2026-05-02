@@ -126,7 +126,7 @@ public final class FatJarStep extends Step {
    */
   @Override
   protected void execute() {
-    LOGGER.info("[buildente] Packaging fat JAR: " + getOutputJarPath() + " ...");
+    LOGGER.info("Packaging fat JAR: " + getOutputJarPath() + " ...");
 
     new File(JarStep.OUTPUT_DIR).mkdirs();
 
@@ -151,10 +151,10 @@ public final class FatJarStep extends Step {
 
     } catch (IOException e) {
       throw new RuntimeException(
-          "[buildente] Failed to create fat JAR '" + jarName + "': " + e.getMessage(), e);
+          "Failed to create fat JAR '" + jarName + "': " + e.getMessage(), e);
     }
 
-    LOGGER.info("[buildente] Fat JAR created -> " + getOutputJarPath());
+    LOGGER.info("Fat JAR created -> " + getOutputJarPath());
   }
 
   // -------------------------------------------------------------------------
@@ -200,7 +200,7 @@ public final class FatJarStep extends Step {
     Path classesRoot = Path.of(Executable.OUTPUT_DIR);
     if (!Files.isDirectory(classesRoot)) {
       throw new IllegalStateException(
-          "[buildente] Compiled classes directory not found: "
+          "Compiled classes directory not found: "
               + classesRoot.toAbsolutePath()
               + ". Was the compile step executed?");
     }
@@ -221,7 +221,7 @@ public final class FatJarStep extends Step {
                 written.add(entryName);
               } catch (IOException e) {
                 throw new RuntimeException(
-                    "[buildente] Failed to add class file '" + entryName + "': " + e.getMessage(),
+                    "Failed to add class file '" + entryName + "': " + e.getMessage(),
                     e);
               }
             });
@@ -237,7 +237,7 @@ public final class FatJarStep extends Step {
    * @throws IOException if the dependency JAR cannot be read
    */
   private void mergeJar(ZipOutputStream zos, Path jarPath, Set<String> written) throws IOException {
-    LOGGER.info("[buildente]   merging " + jarPath.getFileName());
+    LOGGER.info("  merging " + jarPath.getFileName());
 
     try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(jarPath))) {
       ZipEntry entry;

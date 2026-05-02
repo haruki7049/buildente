@@ -86,7 +86,7 @@ public final class ScriptRunner {
       throw new BuildScriptException(
           "No build script found. Expected: " + scriptFile.toAbsolutePath());
     }
-    LOGGER.info("[buildente] Found script: " + scriptFile.toAbsolutePath());
+    LOGGER.info("Found script: " + scriptFile.toAbsolutePath());
 
     // ------------------------------------------------------------------ 2. Resolve dependencies
     resolveDependencies(scriptDir, b);
@@ -98,13 +98,13 @@ public final class ScriptRunner {
     BuildScript script = load(outputDir);
 
     // ------------------------------------------------------------------ 5. Define graph
-    LOGGER.info("[buildente] Configuring build graph...");
+    LOGGER.info("Configuring build graph...");
     script.build(b);
 
     // ------------------------------------------------------------------ 6. Execute
-    LOGGER.info("[buildente] Build started. Step: " + stepName);
+    LOGGER.info("Build started. Step: " + stepName);
     b.executeStep(stepName);
-    LOGGER.info("[buildente] Build finished.");
+    LOGGER.info("Build finished.");
   }
 
   // ------------------------------------------------------------------
@@ -141,7 +141,7 @@ public final class ScriptRunner {
     }
 
     LOGGER.info(
-        "[buildente] Fetching " + deps.getAliases().size() + " package(s) from deps.properties...");
+        "Fetching " + deps.getAliases().size() + " package(s) from deps.properties...");
 
     try {
       Map<String, Path> resolvedJars = DependencyFetcher.fetchAll(deps);
@@ -150,7 +150,7 @@ public final class ScriptRunner {
       throw new BuildScriptException("Dependency resolution failed: " + e.getMessage(), e);
     }
 
-    LOGGER.info("[buildente] All dependencies resolved.");
+    LOGGER.info("All dependencies resolved.");
   }
 
   // ------------------------------------------------------------------
@@ -185,7 +185,7 @@ public final class ScriptRunner {
       throw new BuildScriptException("Failed to create output directory", e);
     }
 
-    LOGGER.info("[buildente] Compiling script -> " + outputDir.getAbsolutePath());
+    LOGGER.info("Compiling script -> " + outputDir.getAbsolutePath());
 
     // Forward the full JVM classpath so the script can import buildente classes
     String classpath = System.getProperty("java.class.path");
@@ -252,7 +252,7 @@ public final class ScriptRunner {
                   + BuildScript.class.getName());
         }
 
-        LOGGER.info("[buildente] Loaded script class: " + scriptClass.getName());
+        LOGGER.info("Loaded script class: " + scriptClass.getName());
         return (BuildScript) scriptClass.getDeclaredConstructor().newInstance();
       }
 

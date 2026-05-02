@@ -68,13 +68,13 @@ public final class Updater {
       DepsProperties.Entry entry = deps.getEntry(alias);
 
       if (entry.getSha256() != null) {
-        log.append("[buildente] ").append(alias).append(": sha256 already present, skipping.\n");
+        log.append("").append(alias).append(": sha256 already present, skipping.\n");
         skipped++;
         continue;
       }
 
       if (entry.getRepo() == null) {
-        log.append("[buildente] ")
+        log.append("")
             .append(alias)
             .append(": missing '")
             .append(alias)
@@ -84,15 +84,15 @@ public final class Updater {
       }
 
       String url = entry.toJarUrl();
-      log.append("[buildente] ").append(alias).append(": fetching ").append(url).append('\n');
+      log.append("").append(alias).append(": fetching ").append(url).append('\n');
 
       try {
         String hash = DependencyFetcher.computeRemoteSha256(url, tempCacheDir);
-        log.append("[buildente] ").append(alias).append(": sha256 = ").append(hash).append('\n');
+        log.append("").append(alias).append(": sha256 = ").append(hash).append('\n');
         deps = deps.withSha256(alias, hash);
         updated++;
       } catch (DependencyFetcher.DependencyFetchException e) {
-        log.append("[buildente] ")
+        log.append("")
             .append(alias)
             .append(": ERROR — ")
             .append(e.getMessage())

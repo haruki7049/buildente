@@ -19,6 +19,8 @@ public class Main {
    * @param args command-line arguments forwarded to picocli
    */
   public static void main(String[] args) {
+    System.setProperty(
+        "java.util.logging.SimpleFormatter.format", "Buildente %4$s: %5$s%n");
     CommandLine cli = new CommandLine(new Cli());
     System.exit(cli.execute(args));
   }

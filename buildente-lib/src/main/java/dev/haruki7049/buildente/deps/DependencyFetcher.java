@@ -75,7 +75,7 @@ public final class DependencyFetcher {
     Map<String, Path> result = new LinkedHashMap<>();
     for (String alias : deps.getAliases()) {
       DepsProperties.Entry entry = deps.getEntry(alias);
-      LOGGER.info("[buildente] Resolving dependency: " + alias);
+      LOGGER.info("Resolving dependency: " + alias);
       Path jar = fetchOne(alias, entry, cacheDir);
       result.put(alias, jar);
     }
@@ -107,12 +107,12 @@ public final class DependencyFetcher {
     Path cachedJar = cacheDir.resolve(entry.getSha256() + ".jar");
 
     if (Files.exists(cachedJar)) {
-      LOGGER.info("[buildente]   cache hit  -> " + cachedJar.getFileName());
+      LOGGER.info("  cache hit  -> " + cachedJar.getFileName());
       return cachedJar;
     }
 
     String url = entry.toJarUrl();
-    LOGGER.info("[buildente]   downloading " + url);
+    LOGGER.info("  downloading " + url);
     Path tempFile = cacheDir.resolve(entry.getSha256() + ".jar.tmp");
 
     try {
@@ -136,7 +136,7 @@ public final class DependencyFetcher {
 
       // Move temp → final cache location atomically
       Files.move(tempFile, cachedJar, StandardCopyOption.ATOMIC_MOVE);
-      LOGGER.info("[buildente]   cached     -> " + cachedJar.getFileName());
+      LOGGER.info("  cached     -> " + cachedJar.getFileName());
       return cachedJar;
 
     } catch (DependencyFetchException e) {
