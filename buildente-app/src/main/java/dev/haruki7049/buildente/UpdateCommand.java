@@ -4,6 +4,7 @@ import dev.haruki7049.buildente.deps.DepsProperties;
 import dev.haruki7049.buildente.deps.Updater;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 import picocli.CommandLine;
 
 /**
@@ -19,6 +20,8 @@ import picocli.CommandLine;
         "Compute and record sha256 hashes for any deps.properties entries that are missing them.")
 public class UpdateCommand implements Callable<Integer> {
 
+  private static final Logger LOGGER = Logger.getLogger(UpdateCommand.class.getName());
+
   /** Creates a new {@code UpdateCommand} instance with default settings. */
   public UpdateCommand() {}
 
@@ -31,15 +34,17 @@ public class UpdateCommand implements Callable<Integer> {
   public Integer call() {
     Updater.Result result = Updater.run(Paths.get(System.getProperty("user.dir")));
 
-    // Print accumulated log lines from the resolution phase
-    if (!result.getLog().isEmpty()) {
-      System.out.print(result.getLog());
+    // Log accumulated lines from the resolution phase
+    for (String line : result.getLog().split("\n")) {
+      if (!line.isEmpty()) {
+        LOGGER.info(line);
+      }
     }
 
     switch (result.getStatus()) {
       case NO_FILE:
-        System.err.println(
-            "[buildente] No "
+        LOGGER.severe(
+            "No "
                 + DepsProperties.FILE_NAME
                 + " found in the current directory.\n"
                 + "  Create one with <alias>.id and <alias>.repo entries,"
@@ -47,47 +52,46 @@ public class UpdateCommand implements Callable<Integer> {
         return 1;
 
       case READ_ERROR:
-        System.err.println(
-            "[buildente] Failed to read "
+        LOGGER.severe(
+            "Failed to read "
                 + DepsProperties.FILE_NAME
                 + ": "
                 + result.getCause().getMessage());
         return 1;
 
       case EMPTY:
-        System.out.println(
-            "[buildente] No entries found in " + DepsProperties.FILE_NAME + ". Nothing to update.");
+        LOGGER.info(
+            "No entries found in " + DepsProperties.FILE_NAME + ". Nothing to update.");
         return 0;
 
       case FETCH_ERRORS:
-        System.err.println(
-            "[buildente] "
-                + result.getErrors()
+        LOGGER.severe(
+            result.getErrors()
                 + " error(s) occurred. "
                 + DepsProperties.FILE_NAME
                 + " not written.");
         return 1;
 
       case NOTHING_TO_UPDATE:
-        System.out.println("[buildente] All sha256 entries already present. Nothing to write.");
+        LOGGER.info("All sha256 entries already present. Nothing to write.");
         return 0;
 
       case WRITE_ERROR:
-        System.err.println(
-            "[buildente] Failed to write "
+        LOGGER.severe(
+            "Failed to write "
                 + DepsProperties.FILE_NAME
                 + ": "
                 + result.getCause().getMessage());
         return 1;
 
       case SUCCESS:
-        System.out.println("[buildente] Updated " + DepsProperties.FILE_NAME + ".");
-        System.out.println(
-            "[buildente] Commit " + DepsProperties.FILE_NAME + " to version control.");
+        LOGGER.info("Updated " + DepsProperties.FILE_NAME + ".");
+        LOGGER.info(
+            "Commit " + DepsProperties.FILE_NAME + " to version control.");
         return 0;
 
       default:
-        System.err.println("[buildente] Unknown result status: " + result.getStatus());
+        LOGGER.severe("Unknown result status: " + result.getStatus());
         return 1;
     }
   }

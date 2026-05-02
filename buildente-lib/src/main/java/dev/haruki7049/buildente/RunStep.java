@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A build step that runs a previously compiled {@link Executable}.
@@ -19,6 +20,8 @@ import java.util.List;
  * argument so that the program can load them at runtime.
  */
 public class RunStep extends Step {
+
+  private static final Logger LOGGER = Logger.getLogger(RunStep.class.getName());
 
   /** The compilation step whose output this step will execute. */
   private final Executable executable;
@@ -62,7 +65,7 @@ public class RunStep extends Step {
   @Override
   protected void execute() {
     String className = executable.getExecutableName();
-    System.out.println("[buildente] Running " + className + " ...");
+    LOGGER.info("Running " + className + " ...");
 
     try {
       List<String> command = new ArrayList<>();
@@ -80,16 +83,16 @@ public class RunStep extends Step {
 
       if (exitCode != 0) {
         throw new RuntimeException(
-            "[buildente] java exited with code " + exitCode + " for class: " + className);
+            "java exited with code " + exitCode + " for class: " + className);
       }
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("[buildente] Execution interrupted: " + className, e);
+      throw new RuntimeException("Execution interrupted: " + className, e);
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new RuntimeException("[buildente] Failed to run: " + className, e);
+      throw new RuntimeException("Failed to run: " + className, e);
     }
   }
 

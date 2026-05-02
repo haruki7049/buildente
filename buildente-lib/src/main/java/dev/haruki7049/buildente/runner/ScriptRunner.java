@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Locates, compiles, and executes a user-written {@code Buildente.java} script.
@@ -51,6 +52,8 @@ import java.util.Map;
  */
 public final class ScriptRunner {
 
+  private static final Logger LOGGER = Logger.getLogger(ScriptRunner.class.getName());
+
   /** Name of the build script file Buildente looks for. */
   public static final String SCRIPT_FILE = "Buildente.java";
 
@@ -83,7 +86,7 @@ public final class ScriptRunner {
       throw new BuildScriptException(
           "No build script found. Expected: " + scriptFile.toAbsolutePath());
     }
-    System.out.println("[buildente] Found script: " + scriptFile.toAbsolutePath());
+    LOGGER.info("Found script: " + scriptFile.toAbsolutePath());
 
     // ------------------------------------------------------------------ 2. Resolve dependencies
     resolveDependencies(scriptDir, b);
@@ -95,13 +98,13 @@ public final class ScriptRunner {
     BuildScript script = load(outputDir);
 
     // ------------------------------------------------------------------ 5. Define graph
-    System.out.println("[buildente] Configuring build graph...");
+    LOGGER.info("Configuring build graph...");
     script.build(b);
 
     // ------------------------------------------------------------------ 6. Execute
-    System.out.println("[buildente] Build started. Step: " + stepName);
+    LOGGER.info("Build started. Step: " + stepName);
     b.executeStep(stepName);
-    System.out.println("[buildente] Build finished.");
+    LOGGER.info("Build finished.");
   }
 
   // ------------------------------------------------------------------
@@ -137,8 +140,8 @@ public final class ScriptRunner {
       return;
     }
 
-    System.out.println(
-        "[buildente] Fetching " + deps.getAliases().size() + " package(s) from deps.properties...");
+    LOGGER.info(
+        "Fetching " + deps.getAliases().size() + " package(s) from deps.properties...");
 
     try {
       Map<String, Path> resolvedJars = DependencyFetcher.fetchAll(deps);
@@ -147,7 +150,7 @@ public final class ScriptRunner {
       throw new BuildScriptException("Dependency resolution failed: " + e.getMessage(), e);
     }
 
-    System.out.println("[buildente] All dependencies resolved.");
+    LOGGER.info("All dependencies resolved.");
   }
 
   // ------------------------------------------------------------------
@@ -182,7 +185,7 @@ public final class ScriptRunner {
       throw new BuildScriptException("Failed to create output directory", e);
     }
 
-    System.out.println("[buildente] Compiling script -> " + outputDir.getAbsolutePath());
+    LOGGER.info("Compiling script -> " + outputDir.getAbsolutePath());
 
     // Forward the full JVM classpath so the script can import buildente classes
     String classpath = System.getProperty("java.class.path");
@@ -249,7 +252,7 @@ public final class ScriptRunner {
                   + BuildScript.class.getName());
         }
 
-        System.out.println("[buildente] Loaded script class: " + scriptClass.getName());
+        LOGGER.info("Loaded script class: " + scriptClass.getName());
         return (BuildScript) scriptClass.getDeclaredConstructor().newInstance();
       }
 

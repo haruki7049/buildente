@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A build step that packages compiled class files into a JAR archive.
@@ -48,6 +49,8 @@ import java.util.List;
  * which must be available on {@code PATH} at build time (it ships with every JDK).
  */
 public class JarStep extends Step {
+
+  private static final Logger LOGGER = Logger.getLogger(JarStep.class.getName());
 
   /** Directory where all produced JAR files are placed. */
   public static final String OUTPUT_DIR = "build/libs";
@@ -185,7 +188,7 @@ public class JarStep extends Step {
    */
   @Override
   protected void execute() {
-    System.out.println("[buildente] Packaging JAR: " + getOutputJarPath() + " ...");
+    LOGGER.info("Packaging JAR: " + getOutputJarPath() + " ...");
 
     // Ensure the output directory exists
     new File(OUTPUT_DIR).mkdirs();
@@ -202,21 +205,21 @@ public class JarStep extends Step {
       if (effectiveConfig != null) {
         tempManifest = writeTempManifest(effectiveConfig);
         effectiveManifestPath = tempManifest.toAbsolutePath().toString();
-        System.out.println("[buildente] Using programmatic manifest: " + effectiveConfig);
+        LOGGER.info("Using programmatic manifest: " + effectiveConfig);
       } else if (manifestFilePath != null && !manifestFilePath.isBlank()) {
         File mf = new File(manifestFilePath);
         if (!mf.exists()) {
           throw new RuntimeException(
-              "[buildente] Manifest file not found: " + mf.getAbsolutePath());
+              "Manifest file not found: " + mf.getAbsolutePath());
         }
         effectiveManifestPath = mf.getAbsolutePath();
-        System.out.println("[buildente] Using manifest file: " + effectiveManifestPath);
+        LOGGER.info("Using manifest file: " + effectiveManifestPath);
       }
 
       List<String> command = buildJarCommand(effectiveManifestPath);
       runCommand(command);
 
-      System.out.println("[buildente] JAR created -> " + getOutputJarPath());
+      LOGGER.info("JAR created -> " + getOutputJarPath());
 
     } finally {
       // Always clean up the temporary manifest, even on failure
@@ -249,7 +252,7 @@ public class JarStep extends Step {
       }
       return tmp;
     } catch (IOException e) {
-      throw new RuntimeException("[buildente] Failed to write temporary manifest file", e);
+      throw new RuntimeException("Failed to write temporary manifest file", e);
     }
   }
 
@@ -293,16 +296,16 @@ public class JarStep extends Step {
 
       if (exitCode != 0) {
         throw new RuntimeException(
-            "[buildente] jar exited with code " + exitCode + " for: " + jarName);
+            "jar exited with code " + exitCode + " for: " + jarName);
       }
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("[buildente] JAR packaging interrupted: " + jarName, e);
+      throw new RuntimeException("JAR packaging interrupted: " + jarName, e);
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new RuntimeException("[buildente] Failed to create JAR: " + jarName, e);
+      throw new RuntimeException("Failed to create JAR: " + jarName, e);
     }
   }
 }

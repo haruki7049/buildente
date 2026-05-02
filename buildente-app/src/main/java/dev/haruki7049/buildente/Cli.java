@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 import picocli.CommandLine;
 
 /**
@@ -29,6 +30,8 @@ import picocli.CommandLine;
     subcommands = {UpdateCommand.class},
     description = "Buildente - a Java build system inspired by Zig's build system")
 public class Cli implements Callable<Integer> {
+
+  private static final Logger LOGGER = Logger.getLogger(Cli.class.getName());
 
   /** Creates a new {@code Cli} instance with default settings. */
   public Cli() {}
@@ -55,10 +58,10 @@ public class Cli implements Callable<Integer> {
     try {
       ScriptRunner.run(scriptDir, b, requestedStep);
     } catch (ScriptRunner.BuildScriptException e) {
-      System.err.println("[buildente] ERROR: " + e.getMessage());
+      LOGGER.severe("ERROR: " + e.getMessage());
 
       if (e.getCause() != null) {
-        System.err.println("[buildente] Caused by: " + e.getCause());
+        LOGGER.severe("Caused by: " + e.getCause());
       }
 
       return 1;

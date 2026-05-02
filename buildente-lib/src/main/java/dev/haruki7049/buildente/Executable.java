@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +23,8 @@ import java.util.stream.Collectors;
  * JAR paths (from {@code deps.properties}) are forwarded to {@code javac} via {@code -classpath}.
  */
 public class Executable extends Step {
+
+  private static final Logger LOGGER = Logger.getLogger(Executable.class.getName());
 
   /** Directory where all compiled class files are placed. */
   public static final String OUTPUT_DIR = "build/classes";
@@ -121,12 +124,12 @@ public class Executable extends Step {
   @Override
   protected void execute() {
     String sourceDir = module.getSourceDir();
-    System.out.println("[buildente] Compiling sources under " + sourceDir + " ...");
+    LOGGER.info("Compiling sources under " + sourceDir + " ...");
 
     new File(OUTPUT_DIR).mkdirs();
 
     List<String> sourceFiles = module.resolveSourceFiles();
-    System.out.println("[buildente] Found " + sourceFiles.size() + " source file(s)");
+    LOGGER.info("Found " + sourceFiles.size() + " source file(s)");
 
     try {
       List<String> command = buildJavacCommand(sourceFiles);
@@ -139,18 +142,17 @@ public class Executable extends Step {
 
       if (exitCode != 0) {
         throw new RuntimeException(
-            "[buildente] javac exited with code " + exitCode + " for module: " + module);
+            "javac exited with code " + exitCode + " for module: " + module);
       }
 
-      System.out.println("[buildente] Compiled -> " + OUTPUT_DIR);
-
+      LOGGER.info("Compiled -> " + OUTPUT_DIR);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("[buildente] Compilation interrupted for module: " + module, e);
+      throw new RuntimeException("Compilation interrupted for module: " + module, e);
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw new RuntimeException("[buildente] Failed to compile module: " + module, e);
+      throw new RuntimeException("Failed to compile module: " + module, e);
     }
   }
 

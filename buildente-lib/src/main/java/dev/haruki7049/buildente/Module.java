@@ -120,7 +120,7 @@ public final class Module {
       Path jar = resolvedJarMap.get(alias);
       if (jar == null) {
         throw new IllegalStateException(
-            "[buildente] Dependency '"
+            "Dependency '"
                 + alias
                 + "' is not in deps.properties or has no sha256.\n"
                 + "  Run 'bdt update' to populate it.");
@@ -154,7 +154,7 @@ public final class Module {
     Path root = Paths.get(sourceDir);
     if (!root.toFile().isDirectory()) {
       throw new IllegalStateException(
-          "[buildente] Source directory does not exist or is not a directory: "
+          "Source directory does not exist or is not a directory: "
               + root.toAbsolutePath());
     }
 
@@ -166,12 +166,12 @@ public final class Module {
           .forEach(javaFiles::add);
     } catch (Exception e) {
       throw new RuntimeException(
-          "[buildente] Failed to walk source directory: " + root.toAbsolutePath(), e);
+          "Failed to walk source directory: " + root.toAbsolutePath(), e);
     }
 
     if (javaFiles.isEmpty()) {
       throw new IllegalStateException(
-          "[buildente] No .java files found under source directory: " + root.toAbsolutePath());
+          "No .java files found under source directory: " + root.toAbsolutePath());
     }
 
     return Collections.unmodifiableList(javaFiles);
