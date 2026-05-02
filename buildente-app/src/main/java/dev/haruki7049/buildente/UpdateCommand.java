@@ -66,8 +66,7 @@ public class UpdateCommand implements Callable<Integer> {
 
       case FETCH_ERRORS:
         LOGGER.severe(
-            ""
-                + result.getErrors()
+            result.getErrors()
                 + " error(s) occurred. "
                 + DepsProperties.FILE_NAME
                 + " not written.");
